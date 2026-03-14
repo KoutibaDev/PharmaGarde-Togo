@@ -13,14 +13,14 @@
 <!-- PAGE ACCUEIL -->
 <div class="page" id="page-home">
 
-  <div class="install-banner" id="install-banner" onclick="installerApp()" style="cursor:pointer;display:none;">
+  <div class="install-banner" id="install-banner" onclick="installerApp()" style="cursor:pointer;display:flex;">
     <span>📲</span>
     <span class="install-strip-text">Installer l'app sur votre écran d'accueil</span>
     <span onclick="event.stopPropagation();document.getElementById('install-banner').style.display='none'" style="cursor:pointer;opacity:0.6;margin-left:16px;">✕</span>
   </div>
 
   <div class="app-header">
-    <div class="header-logo">Pharma<em>Garde</em></div>
+    <div class="header-logo" onclick="afficherPage('page-home')" style="cursor:pointer;">Pharma<em>Garde</em></div>
     <div class="location-pill" onclick="afficherPage('page-villes')">
       <span>📍</span>
       <div style="flex:1;">
@@ -84,7 +84,7 @@
   <div class="app-header">
     <div style="display:flex;align-items:center;gap:12px;">
       <button onclick="afficherPage('page-home')" style="background:none;border:none;color:white;font-size:28px;cursor:pointer;line-height:1;">‹</button>
-      <div class="header-logo">Pharma<em>Garde</em></div>
+      <div class="header-logo" onclick="afficherPage('page-home')" style="cursor:pointer;">Pharma<em>Garde</em></div>
     </div>
   </div>
   <div class="scroll-area">
@@ -115,7 +115,7 @@
   <div class="contact-hero">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
       <button onclick="afficherPage('page-home')" style="background:none;border:none;color:white;font-size:28px;cursor:pointer;line-height:1;">‹</button>
-      <div class="header-logo">Pharma<em>Garde</em></div>
+      <div class="header-logo" onclick="afficherPage('page-home')" style="cursor:pointer;">Pharma<em>Garde</em></div>
     </div>
     <div class="contact-title">Nous écrire 💬</div>
     <div class="contact-sub">Pharmacie manquante ? Erreur ? Signalez-le.</div>
