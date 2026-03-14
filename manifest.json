@@ -1,0 +1,23 @@
+{
+  "name": "PharmaGarde Togo",
+  "short_name": "PharmaGarde",
+  "description": "Pharmacies de garde au Togo",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#006B3C",
+  "theme_color": "#006B3C",
+  "orientation": "portrait",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192x192/006B3C/FFFFFF?text=PG",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512x512/006B3C/FFFFFF?text=PG",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
