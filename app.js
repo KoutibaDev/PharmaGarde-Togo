@@ -258,7 +258,7 @@ function rechercherPharmacie(terme) {
 // ═══════════════════════════════════════
 function partagerWhatsApp(p) {
   const texte = `💊 *${p.nom}*\n📍 ${p.adresse || ''}, ${p.ville}\n📞 ${p.tel_affiche || p.tel || 'Non précisé'}\n${p.assurances ? '🏥 Assurances: ' + p.assurances : ''}\n\n_Trouvé sur PharmaGarde Togo_ 🇹🇬\n👉 pharma-garde-togo.vercel.app`;
-  window.open(`https://wa.me/?text=${encodeURIComponent(texte)}`, '_blank');
+ window.open(`https://wa.me/22879538131?text=${encodeURIComponent(texte)}`, '_blank');
 }
 
 // ═══════════════════════════════════════
@@ -266,7 +266,7 @@ function partagerWhatsApp(p) {
 // ═══════════════════════════════════════
 function signalerErreur(nom) {
   const texte = `Bonjour PharmaGarde 👋\n\nJe souhaite signaler une erreur concernant :\n*${nom}*\n\nDétails : `;
-  window.open(`https://wa.me/22800000000?text=${encodeURIComponent(texte)}`, '_blank');
+  window.open(`https://wa.me/22879538131?text=${encodeURIComponent(texte)}`, '_blank');
 }
 
 // ═══════════════════════════════════════
