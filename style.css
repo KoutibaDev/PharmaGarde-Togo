@@ -1,9 +1,439 @@
-function afficherUrgences() {
-  return urgences.map(u => `
-    <a href="tel:${u.numero}" class="urg-card ${u.couleur}" style="text-decoration:none;">
-      <div class="urg-emoji">${u.emoji}</div>
-      <div class="urg-name">${u.nom}</div>
-      <div class="urg-num">${u.numero}</div>
-    </a>
-  `).join('');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Fraunces:ital,wght@0,400;0,700;1,400&display=swap');
+
+:root {
+  --g1: #006B3C;
+  --g2: #009A55;
+  --g3: #00C97A;
+  --gold: #FFD100;
+  --red: #FF3B30;
+  --bg: #F2F7F4;
+  --white: #FFFFFF;
+  --text: #0C1E14;
+  --sub: #5A7A68;
+  --border: #D8EDE3;
 }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background: #E8F0EB;
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ── RESPONSIVE : centré sur PC, plein écran sur mobile ── */
+.page {
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--bg);
+  min-height: 100vh;
+  position: relative;
+  box-shadow: 0 0 40px rgba(0,0,0,0.1);
+}
+
+/* HEADER */
+.app-header {
+  background: linear-gradient(135deg, var(--g1), var(--g2));
+  padding: 52px 20px 24px;
+  color: white;
+}
+
+.header-logo {
+  font-family: 'Fraunces', serif;
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+.header-logo em { font-style: italic; color: var(--gold); }
+
+.location-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 14px;
+  padding: 12px 14px;
+  cursor: pointer;
+}
+
+.loc-main { font-size: 14px; font-weight: 600; }
+.loc-sub { font-size: 11px; opacity: 0.65; }
+
+/* INSTALL BANNER */
+.install-banner {
+  background: var(--gold);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.install-strip-text { flex: 1; }
+
+/* TABS */
+.tabs-wrap {
+  background: var(--white);
+  padding: 12px 16px;
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+.tab {
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  color: var(--sub);
+  white-space: nowrap;
+  font-family: 'Outfit', sans-serif;
+}
+
+.tab.on {
+  background: var(--g1);
+  border-color: var(--g1);
+  color: white;
+}
+
+/* CONTENT */
+.scroll-area {
+  padding: 16px;
+  padding-bottom: 90px;
+}
+
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--sub);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.count-badge {
+  background: var(--g3);
+  color: white;
+  border-radius: 20px;
+  padding: 2px 8px;
+  font-size: 10px;
+  letter-spacing: 0;
+}
+
+/* PHARMACY CARD */
+.pharm-card {
+  background: var(--white);
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 16px rgba(0,107,60,0.08);
+  border: 1.5px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.pharm-card.h24::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--gold), #FF9500);
+}
+
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.pharm-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  flex: 1;
+}
+
+.garde-chip {
+  border-radius: 8px;
+  padding: 3px 9px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.garde-chip.soir { background: #E8F5F0; color: var(--g1); }
+.garde-chip.h24 { background: #1a1a2e; color: #a0aeff; }
+
+.card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--sub);
+}
+
+.assurance-row {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.assur-tag {
+  background: #EEF4FF;
+  color: #2563EB;
+  border-radius: 6px;
+  padding: 2px 7px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.card-actions { display: flex; gap: 8px; }
+
+.btn-call {
+  flex: 1;
+  background: var(--g1);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 11px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.btn-icon {
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  background: var(--bg);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+/* URGENCES GRILLE */
+.urg-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.urg-card {
+  border-radius: 16px;
+  padding: 16px 14px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.urg-card.r { background: #FFF0EE; border: 1.5px solid #FFD4CF; }
+.urg-card.b { background: #EEF4FF; border: 1.5px solid #C8DCFF; }
+.urg-card.o { background: #FFF8EE; border: 1.5px solid #FFE4B8; }
+.urg-card.g { background: #F0FFF8; border: 1.5px solid #B8F0D4; }
+
+.urg-emoji { font-size: 28px; }
+.urg-name { font-size: 12px; font-weight: 700; color: var(--text); }
+.urg-num { font-size: 26px; font-weight: 900; letter-spacing: -1px; text-decoration: none; }
+.urg-card.r .urg-num { color: var(--red); }
+.urg-card.b .urg-num { color: #0A84FF; }
+.urg-card.o .urg-num { color: #FF9500; }
+.urg-card.g .urg-num { color: var(--g1); font-size: 13px; }
+
+/* URGENCES PAGE COMPLÈTE */
+.urg-full {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 2px 8px rgba(0,107,60,0.06);
+  text-decoration: none;
+}
+
+.urg-full-icon {
+  width: 48px; height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.urg-full-info { flex: 1; }
+.urg-full-name { font-size: 14px; font-weight: 700; color: var(--text); }
+.urg-full-sub { font-size: 11px; color: var(--sub); margin-top: 2px; }
+.urg-full-num { font-size: 22px; font-weight: 900; color: var(--red); text-decoration: none; }
+
+/* BOTTOM NAV */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
+  background: var(--white);
+  border-top: 1px solid var(--border);
+  display: flex;
+  padding: 8px 0 24px;
+  z-index: 100;
+}
+
+.nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  padding: 6px 4px;
+  background: none;
+  border: none;
+  font-family: 'Outfit', sans-serif;
+}
+
+.nav-icon { font-size: 22px; }
+.nav-label { font-size: 10px; font-weight: 600; color: var(--sub); }
+.nav-btn.on .nav-label { color: var(--g1); }
+.nav-pip { width: 4px; height: 4px; border-radius: 50%; background: var(--g1); opacity: 0; margin-top: 1px; }
+.nav-btn.on .nav-pip { opacity: 1; }
+
+/* CONTACT */
+.contact-hero {
+  background: linear-gradient(135deg, var(--g1), var(--g2));
+  padding: 52px 20px 24px;
+  color: white;
+}
+
+.contact-title {
+  font-family: 'Fraunces', serif;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.contact-sub { font-size: 13px; opacity: 0.7; }
+.contact-body { padding: 20px; padding-bottom: 100px; }
+
+.form-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--sub);
+  display: block;
+  margin-bottom: 6px;
+}
+
+.form-input {
+  width: 100%;
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 13px 15px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  outline: none;
+  margin-bottom: 14px;
+  display: block;
+}
+
+textarea.form-input { resize: none; height: 90px; }
+
+.wa-btn {
+  width: 100%;
+  background: #25D366;
+  color: white;
+  border: none;
+  border-radius: 16px;
+  padding: 16px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* VILLES */
+.ville-header {
+  background: var(--white);
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.ville-title {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.search-box {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  width: 100%;
+  outline: none;
+}
+
+.ville-list { padding: 16px; padding-bottom: 40px; }
+
+.ville-item {
+  background: var(--white);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,107,60,0.06);
+}
+
+.ville-name { flex: 1; font-size: 15px; font-weight: 700; }
+.ville-count { font-size: 12px; color: var(--sub); }
