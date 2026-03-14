@@ -19,13 +19,13 @@ const urgences = [
 // VILLES DU TOGO
 // ═══════════════════════════════════════
 const toutesVilles = [
-  { nom: "Lomé", emoji: "🏙️", zones: "12 zones" },
-  { nom: "Kpalimé", emoji: "🌳", zones: "3 pharmacies" },
-  { nom: "Kara", emoji: "⛰️", zones: "4 pharmacies" },
-  { nom: "Sokodé", emoji: "🌾", zones: "2 pharmacies" },
-  { nom: "Dapaong", emoji: "🏜️", zones: "2 pharmacies" },
-  { nom: "Tsévié", emoji: "🌊", zones: "2 pharmacies" },
-  { nom: "Atakpamé", emoji: "🌴", zones: "3 pharmacies" }
+  { nom: "Lomé", emoji: "🏙️" },
+  { nom: "Kpalimé", emoji: "🌳" },
+  { nom: "Kara", emoji: "⛰️" },
+  { nom: "Sokodé", emoji: "🌾" },
+  { nom: "Dapaong", emoji: "🏜️" },
+  { nom: "Tsévié", emoji: "🌊" },
+  { nom: "Atakpamé", emoji: "🌴" }
 ];
 
 // ═══════════════════════════════════════
@@ -37,17 +37,13 @@ let ongletActif = 'soir';
 // ═══════════════════════════════════════
 // CHARGER LES PHARMACIES
 // ═══════════════════════════════════════
-async function chargerPharmacies(garde, ville) {
+async function chargerPharmacies(ville) {
   try {
     let query = db.from('pharmacies').select('*').eq('actif', true);
     if (ville) query = query.eq('ville', ville);
     const { data, error } = await query;
     if (error) throw error;
-    if (!data || data.length === 0) return [];
-    if (garde === 'soir' || garde === 'nuit') {
-      return data.filter(p => p.garde === garde || p.garde === '24h/24');
-    }
-    return data;
+    return data || [];
   } catch (e) {
     console.error('Erreur Supabase:', e);
     return [];
@@ -64,6 +60,7 @@ function afficherPharmacie(p) {
   const chipClass = p.garde === '24h/24' ? 'h24' : 'soir';
   const chipLabel = p.garde === '24h/24' ? '🌛 24h/24' : '🌆 Ce soir';
   const assurancesHtml = assurances.map(a => `<span class="assur-tag">${a.trim()}</span>`).join('');
+  const telPropre = (p.tel || '').replace(/\s/g, '');
 
   return `
     <div class="pharm-card ${p.garde === '24h/24' ? 'h24' : ''}">
@@ -72,15 +69,15 @@ function afficherPharmacie(p) {
         <div class="garde-chip ${chipClass}">${chipLabel}</div>
       </div>
       <div class="card-meta">
-        <div class="meta-row"><span>📍</span> ${p.adresse}</div>
-        <div class="meta-row"><span>📞</span> ${p.tel_affiche || p.tel}</div>
+        <div class="meta-row"><span>📍</span> ${p.adresse || ''}</div>
+        <div class="meta-row"><span>📞</span> ${p.tel_affiche || p.tel || ''}</div>
         ${heuresHtml}
-        <div class="assurance-row">${assurancesHtml}</div>
+        ${assurancesHtml ? `<div class="assurance-row">${assurancesHtml}</div>` : ''}
       </div>
       <div class="card-actions">
-        <a href="tel:${p.tel}" class="btn-call">📞 Appeler maintenant</a>
-        <a href="https://wa.me/${(p.tel||'').replace('+','')}" target="_blank" class="btn-icon">💬</a>
-        <a href="https://maps.google.com/?q=${encodeURIComponent(p.nom+' '+p.adresse+' Togo')}" target="_blank" class="btn-icon">🗺️</a>
+        ${telPropre ? `<a href="tel:${telPropre}" class="btn-call">📞 Appeler maintenant</a>` : '<div class="btn-call" style="background:#ccc;cursor:not-allowed;">📞 Numéro non précisé</div>'}
+        ${telPropre ? `<a href="https://wa.me/${telPropre.replace('+','')}" target="_blank" class="btn-icon">💬</a>` : ''}
+        <a href="https://maps.google.com/?q=${encodeURIComponent((p.nom||'')+' '+(p.adresse||'')+' Togo')}" target="_blank" class="btn-icon">🗺️</a>
       </div>
     </div>`;
 }
@@ -115,29 +112,39 @@ function afficherUrgencesPage() {
 }
 
 // ═══════════════════════════════════════
-// AFFICHER VILLES
+// AFFICHER VILLES AVEC VRAI NOMBRE
 // ═══════════════════════════════════════
-function afficherVilles(filtre = '') {
+async function afficherVilles(filtre = '') {
   const liste = filtre
     ? toutesVilles.filter(v => v.nom.toLowerCase().includes(filtre.toLowerCase()))
     : toutesVilles;
 
-  return liste.map(v => `
-    <div class="ville-item" onclick="choisirVille('${v.nom}')">
-      <span style="font-size:24px">${v.emoji}</span>
-      <div style="flex:1;">
-        <div class="ville-name">${v.nom}</div>
-        <div class="ville-count">${v.zones}</div>
-      </div>
-      <span style="color:#5A7A68;font-size:20px;">›</span>
-    </div>`).join('');
+  // Compter les pharmacies par ville depuis Supabase
+  const { data } = await db.from('pharmacies').select('ville').eq('actif', true);
+  const compteur = {};
+  (data || []).forEach(p => {
+    compteur[p.ville] = (compteur[p.ville] || 0) + 1;
+  });
+
+  return liste.map(v => {
+    const nb = compteur[v.nom] || 0;
+    return `
+      <div class="ville-item" onclick="choisirVille('${v.nom}')">
+        <span style="font-size:24px">${v.emoji}</span>
+        <div style="flex:1;">
+          <div class="ville-name">${v.nom}</div>
+          <div class="ville-count">${nb} pharmacie${nb > 1 ? 's' : ''}</div>
+        </div>
+        <span style="color:#5A7A68;font-size:20px;">›</span>
+      </div>`;
+  }).join('');
 }
 
 // ═══════════════════════════════════════
 // FILTRER VILLES
 // ═══════════════════════════════════════
-function filtrerVilles(valeur) {
-  document.getElementById('liste-villes').innerHTML = afficherVilles(valeur);
+async function filtrerVilles(valeur) {
+  document.getElementById('liste-villes').innerHTML = await afficherVilles(valeur);
 }
 
 // ═══════════════════════════════════════
@@ -145,7 +152,7 @@ function filtrerVilles(valeur) {
 // ═══════════════════════════════════════
 async function choisirVille(ville) {
   villeActive = ville;
-  document.getElementById('loc-main').textContent = ville + ' — Sélectionné ✓';
+  document.getElementById('loc-main').textContent = ville + ' ✓';
   document.getElementById('loc-sub').textContent = 'Appuyez pour changer de ville';
   afficherPage('page-home');
   await rechargerPharmacies();
@@ -161,14 +168,14 @@ async function rechargerPharmacies() {
       Chargement en cours...
     </div>`;
 
-  const data = await chargerPharmacies(ongletActif, villeActive);
+  const data = await chargerPharmacies(villeActive);
 
   if (!data || data.length === 0) {
     document.getElementById('liste-pharmacies').innerHTML =
       `<div style="text-align:center;padding:48px 20px;color:#5A7A68;">
         <div style="font-size:48px;margin-bottom:12px;">🔍</div>
         <div style="font-weight:700;margin-bottom:6px;">Aucune pharmacie trouvée</div>
-        <div style="font-size:13px;">pour ${villeActive} · ${ongletActif}</div>
+        <div style="font-size:13px;">pour ${villeActive}</div>
       </div>`;
     document.getElementById('count-badge').textContent = '0 trouvée';
     return;
@@ -239,17 +246,22 @@ function installerApp() {
 // INITIALISATION
 // ═══════════════════════════════════════
 window.onload = async function () {
+  // Urgences
   document.getElementById('urgences-home').innerHTML = afficherUrgencesHome();
   document.getElementById('urgences-page').innerHTML = afficherUrgencesPage();
-  document.getElementById('liste-villes').innerHTML = afficherVilles();
 
+  // Villes avec vrais nombres
+  document.getElementById('liste-villes').innerHTML = await afficherVilles();
+
+  // Pharmacies
   await rechargerPharmacies();
 
+  // GPS
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(function () {
-      document.getElementById('loc-main').textContent = 'Lomé — Position détectée ✓';
+      document.getElementById('loc-main').textContent = 'Lomé ✓';
       document.getElementById('loc-sub').textContent = 'GPS actif · Appuyez pour changer';
-    }, function() {
+    }, function () {
       document.getElementById('loc-main').textContent = 'Lomé';
       document.getElementById('loc-sub').textContent = 'Appuyez pour changer de ville';
     });
