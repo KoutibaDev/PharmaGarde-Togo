@@ -17,11 +17,15 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Verifier fichiers
-        run: ls -la && ls -la scripts/
-
       - name: Installer dependances
         run: npm install
+
+      - name: Debug fichiers
+        run: |
+          pwd
+          ls -la
+          ls -la scripts/
+          cat scripts/update-pharmacies.js
 
       - name: Lancer script
         env:
