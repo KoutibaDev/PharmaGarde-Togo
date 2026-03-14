@@ -7,12 +7,20 @@
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Fraunces:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 
+<!-- POPUP PHARMACIE -->
+<div id="popup-overlay" onclick="fermerPopup()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;"></div>
+<div id="popup-pharmacie" style="display:none;position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-radius:24px 24px 0 0;z-index:1001;padding:24px;box-shadow:0 -8px 40px rgba(0,0,0,0.2);">
+  <div style="width:40px;height:4px;background:#D8EDE3;border-radius:2px;margin:0 auto 20px;"></div>
+  <div id="popup-content"></div>
+</div>
+
 <!-- PAGE ACCUEIL -->
 <div class="page" id="page-home">
-
   <div class="install-banner" id="install-banner" onclick="installerApp()" style="cursor:pointer;display:flex;">
     <span>📲</span>
     <span class="install-strip-text">Installer l'app sur votre écran d'accueil</span>
@@ -38,13 +46,24 @@
   </div>
 
   <div class="scroll-area">
-    <div class="section-label">
+    <!-- Pharmacie la plus proche -->
+    <div id="plus-proche-section" style="display:none;">
+      <div class="section-label">📍 La plus proche de vous</div>
+      <div id="plus-proche-card"></div>
+    </div>
+
+    <div class="section-label" style="margin-top:8px;">
       Pharmacies de garde
       <span class="count-badge" id="count-badge">...</span>
     </div>
     <div id="liste-pharmacies"></div>
 
-    <div class="section-label" style="margin-top:8px;">Urgences rapides</div>
+    <!-- Bouton voir toutes -->
+    <button class="voir-toutes-btn" onclick="afficherPage('page-toutes')">
+      Voir toutes les pharmacies →
+    </button>
+
+    <div class="section-label" style="margin-top:16px;">Urgences rapides</div>
     <div class="urg-grid" id="urgences-home"></div>
   </div>
 
@@ -60,6 +79,71 @@
       <div class="nav-pip"></div>
     </button>
     <button class="nav-btn" id="nav-contact" onclick="afficherPage('page-contact')">
+      <span class="nav-icon">✉️</span>
+      <span class="nav-label">Contact</span>
+      <div class="nav-pip"></div>
+    </button>
+  </div>
+</div>
+
+<!-- PAGE TOUTES LES PHARMACIES -->
+<div class="page" id="page-toutes" style="display:none;">
+  <div class="app-header">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button onclick="afficherPage('page-home')" style="background:none;border:none;color:white;font-size:28px;cursor:pointer;">‹</button>
+      <div class="header-logo" style="cursor:pointer;">Toutes les pharmacies</div>
+    </div>
+  </div>
+
+  <!-- Sélecteur ville -->
+  <div style="padding:12px 20px;background:white;border-bottom:1px solid var(--border);">
+    <select id="select-ville" onchange="changerVilleToutes(this.value)" style="width:100%;padding:10px 14px;border-radius:12px;border:1.5px solid var(--border);font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;color:var(--text);background:var(--bg);outline:none;">
+      <option value="Lomé">🏙️ Lomé</option>
+      <option value="Kpalimé">🌳 Kpalimé</option>
+      <option value="Kara">⛰️ Kara</option>
+      <option value="Sokodé">🌾 Sokodé</option>
+      <option value="Dapaong">🏜️ Dapaong</option>
+      <option value="Tsévié">🌊 Tsévié</option>
+      <option value="Atakpamé">🌴 Atakpamé</option>
+    </select>
+  </div>
+
+  <!-- Filtres zones -->
+  <div class="zones-wrap" id="zones-wrap">
+    <button class="zone-btn on" id="zone-tous" onclick="filtrerZone('tous')">Toutes</button>
+    <button class="zone-btn" id="zone-A" onclick="filtrerZone('A')">Zone A</button>
+    <button class="zone-btn" id="zone-B" onclick="filtrerZone('B')">Zone B</button>
+    <button class="zone-btn" id="zone-C" onclick="filtrerZone('C')">Zone C</button>
+    <button class="zone-btn" id="zone-D" onclick="filtrerZone('D')">Zone D</button>
+    <button class="zone-btn" id="zone-E" onclick="filtrerZone('E')">Zone E</button>
+    <button class="zone-btn" id="zone-F" onclick="filtrerZone('F')">Zone F-L</button>
+  </div>
+
+  <!-- Carte Lomé -->
+  <div id="carte-container" style="height:200px;margin:0;">
+    <div id="carte-lome" style="height:200px;width:100%;"></div>
+  </div>
+
+  <div class="scroll-area" style="padding-top:12px;">
+    <div class="section-label">
+      Liste complète
+      <span class="count-badge" id="count-toutes">...</span>
+    </div>
+    <div id="liste-toutes"></div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-btn" onclick="afficherPage('page-home')">
+      <span class="nav-icon">💊</span>
+      <span class="nav-label">Pharmacies</span>
+      <div class="nav-pip"></div>
+    </button>
+    <button class="nav-btn" onclick="afficherPage('page-urgences')">
+      <span class="nav-icon">🚨</span>
+      <span class="nav-label">Urgences</span>
+      <div class="nav-pip"></div>
+    </button>
+    <button class="nav-btn" onclick="afficherPage('page-contact')">
       <span class="nav-icon">✉️</span>
       <span class="nav-label">Contact</span>
       <div class="nav-pip"></div>
@@ -123,19 +207,12 @@
   <div class="contact-body">
     <label class="form-label">Votre numéro WhatsApp</label>
     <input class="form-input" id="input-tel" type="tel" placeholder="+228 XX XX XX XX">
-
     <label class="form-label">Votre ville</label>
     <input class="form-input" id="input-ville" placeholder="Ex: Lomé, Kara, Sokodé...">
-
     <label class="form-label">Votre message</label>
     <textarea class="form-input" id="input-message" placeholder="Ex: La pharmacie X est de garde ce soir mais n'apparaît pas..."></textarea>
-
-    <button class="wa-btn" onclick="envoyerWhatsApp()">
-      💬 Envoyer via WhatsApp
-    </button>
-    <div style="text-align:center;color:#5A7A68;font-size:12px;margin-top:12px;">
-      Réponse sous 24h · Vos données restent privées
-    </div>
+    <button class="wa-btn" onclick="envoyerWhatsApp()">💬 Envoyer via WhatsApp</button>
+    <div style="text-align:center;color:#5A7A68;font-size:12px;margin-top:12px;">Réponse sous 24h · Vos données restent privées</div>
   </div>
   <div class="bottom-nav">
     <button class="nav-btn" onclick="afficherPage('page-home')">
