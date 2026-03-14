@@ -196,7 +196,7 @@ body {
   animation: bannerShimmer 4s linear infinite;
   overflow: hidden;
   height: 38px;
-  display: flex !important;
+  display: flex;
   align-items: center;
   cursor: pointer;
   position: relative;
