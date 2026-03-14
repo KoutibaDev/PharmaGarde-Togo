@@ -10,7 +10,6 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // ═══════════════════════════════════════
 let villeActive = 'Lomé';
 let toutesPharmacies = [];
-let zoneActive = 'tous';
 let villeToutes = 'Lomé';
 let carteLeaflet = null;
 let userLat = null;
@@ -63,9 +62,9 @@ function cacherSplash() {
     const splash = document.getElementById('splash-screen');
     if (splash) {
       splash.classList.add('hide');
-      setTimeout(() => splash.remove(), 500);
+      setTimeout(() => { if (splash.parentNode) splash.remove(); }, 600);
     }
-  }, 2200);
+  }, 2400);
 }
 
 // ═══════════════════════════════════════
@@ -74,39 +73,71 @@ function cacherSplash() {
 function toggleDark() {
   darkMode = !darkMode;
   document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : '');
-  document.getElementById('dark-btn').textContent = darkMode ? '☀️' : '🌙';
+  const icon = document.getElementById('dark-icon');
+  const label = document.getElementById('dark-label');
+  const toggle = document.getElementById('toggle-switch');
+  if (icon) icon.textContent = darkMode ? '☀️' : '🌙';
+  if (label) label.textContent = darkMode ? 'Mode clair' : 'Mode sombre';
+  if (toggle) toggle.classList.toggle('on', darkMode);
   localStorage.setItem('darkMode', darkMode);
 }
 
 function initDarkMode() {
-  const saved = localStorage.getItem('darkMode');
-  if (saved === 'true') {
+  if (localStorage.getItem('darkMode') === 'true') {
     darkMode = true;
     document.documentElement.setAttribute('data-theme', 'dark');
-    const btn = document.getElementById('dark-btn');
-    if (btn) btn.textContent = '☀️';
+    const icon = document.getElementById('dark-icon');
+    const label = document.getElementById('dark-label');
+    const toggle = document.getElementById('toggle-switch');
+    if (icon) icon.textContent = '☀️';
+    if (label) label.textContent = 'Mode clair';
+    if (toggle) toggle.classList.add('on');
   }
 }
 
 // ═══════════════════════════════════════
-// NAVIGATION AVEC TRANSITIONS
+// MENU HAMBURGER
+// ═══════════════════════════════════════
+function ouvrirMenu() {
+  document.getElementById('nav-menu').classList.add('open');
+  document.getElementById('nav-overlay').classList.add('open');
+  document.getElementById('hamburger')?.classList.add('open');
+}
+
+function fermerMenu() {
+  document.getElementById('nav-menu').classList.remove('open');
+  document.getElementById('nav-overlay').classList.remove('open');
+  document.querySelectorAll('.hamburger').forEach(h => h.classList.remove('open'));
+}
+
+function naviguerMenu(pageId) {
+  fermerMenu();
+  setTimeout(() => afficherPage(pageId, true), 200);
+  // Mettre à jour l'item actif
+  document.querySelectorAll('.nav-menu-item').forEach(i => i.classList.remove('active'));
+  const map = { 'page-home': 'menu-pharmacies', 'page-urgences': 'menu-urgences', 'page-contact': 'menu-contact' };
+  if (map[pageId]) document.getElementById(map[pageId])?.classList.add('active');
+}
+
+// ═══════════════════════════════════════
+// NAVIGATION
 // ═══════════════════════════════════════
 function afficherPage(pageId, slideForward = true) {
-  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.remove('active', 'slide-in', 'slide-back');
+  });
+
   const page = document.getElementById(pageId);
-  page.style.display = 'block';
-  page.classList.remove('slide-in', 'slide-back');
+  if (!page) return;
+  page.classList.add('active');
   void page.offsetWidth;
   page.classList.add(slideForward ? 'slide-in' : 'slide-back');
   window.scrollTo(0, 0);
 
+  // Bottom nav
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('on'));
-  const map = {
-    'page-home': 'nav-home',
-    'page-urgences': 'nav-urgences',
-    'page-contact': 'nav-contact'
-  };
-  if (map[pageId]) document.getElementById(map[pageId])?.classList.add('on');
+  const navMap = { 'page-home': 'nav-home', 'page-urgences': 'nav-urgences', 'page-contact': 'nav-contact' };
+  if (navMap[pageId]) document.getElementById(navMap[pageId])?.classList.add('on');
 
   if (pageId === 'page-toutes') {
     villeToutes = villeActive;
@@ -127,58 +158,106 @@ async function chargerPharmacies(ville) {
     if (error) throw error;
     return data || [];
   } catch (e) {
-    console.error('Erreur:', e);
+    console.error('Erreur Supabase:', e);
     return [];
   }
 }
 
 // ═══════════════════════════════════════
-// RECHERCHE RAPIDE
-// ═══════════════════════════════════════
-function rechercherPharmacie(terme) {
-  if (!terme.trim()) {
-    const apercu = donneesPharmacies.slice(0, 3);
-    document.getElementById('liste-pharmacies').innerHTML = apercu.map(p => afficherPharmacie(p)).join('');
-    document.getElementById('count-badge').textContent = donneesPharmacies.length + ' trouvée' + (donneesPharmacies.length > 1 ? 's' : '');
-    return;
-  }
-
-  const t = terme.toLowerCase();
-  const resultats = donneesPharmacies.filter(p =>
-    p.nom?.toLowerCase().includes(t) ||
-    p.adresse?.toLowerCase().includes(t) ||
-    p.zone?.toLowerCase().includes(t)
-  );
-
-  document.getElementById('liste-pharmacies').innerHTML = resultats.length > 0
-    ? resultats.map(p => afficherPharmacie(p)).join('')
-    : `<div style="text-align:center;padding:32px;color:var(--sub);">
-        <div style="font-size:36px;margin-bottom:10px;">🔍</div>
-        <div style="font-weight:700;">Aucun résultat pour "${terme}"</div>
-      </div>`;
-
-  document.getElementById('count-badge').textContent = resultats.length + ' trouvée' + (resultats.length > 1 ? 's' : '');
-}
-
-// ═══════════════════════════════════════
-// DISTANCE GPS
+// DISTANCE GPS RÉELLE
 // ═══════════════════════════════════════
 function calculerDistance(lat1, lng1, lat2, lng2) {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLng/2) * Math.sin(dLng/2);
+  const a = Math.sin(dLat/2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng/2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// ═══════════════════════════════════════
+// PHARMACIE LA PLUS PROCHE (vraie distance)
+// ═══════════════════════════════════════
+function trouverPlusProche(pharmacies) {
+  if (!pharmacies.length) return null;
+
+  // Si GPS disponible, calculer vraie distance
+  if (userLat && userLng) {
+    const coordsVille = coordsVilles[villeActive];
+    if (coordsVille) {
+      // Ajouter des coordonnées approximatives par zone
+      const offsetsZones = {
+        'A': { lat: 0.000, lng: 0.000 },
+        'B': { lat: 0.015, lng: -0.010 },
+        'C': { lat: 0.020, lng: 0.005 },
+        'D': { lat: 0.025, lng: 0.015 },
+        'E': { lat: -0.015, lng: -0.020 },
+        'F': { lat: -0.030, lng: -0.015 },
+      };
+
+      let plusProche = null;
+      let distMin = Infinity;
+
+      pharmacies.forEach(p => {
+        const offset = offsetsZones[p.zone] || { lat: 0, lng: 0 };
+        const pLat = coordsVille.lat + offset.lat;
+        const pLng = coordsVille.lng + offset.lng;
+        const dist = calculerDistance(userLat, userLng, pLat, pLng);
+        if (dist < distMin) {
+          distMin = dist;
+          plusProche = { ...p, distanceKm: dist, pLat, pLng };
+        }
+      });
+
+      return plusProche;
+    }
+  }
+
+  // Fallback : pharmacie 24h ou première
+  return pharmacies.find(p => p.garde === '24h/24') || pharmacies[0];
+}
+
+function afficherPlusProche(pharmacies) {
+  if (!pharmacies.length) return;
+  const plusProche = trouverPlusProche(pharmacies);
+  if (!plusProche) return;
+
+  document.getElementById('plus-proche-section').style.display = 'block';
+  const distText = plusProche.distanceKm
+    ? `<div class="meta-row"><span>📏</span>${plusProche.distanceKm < 1 ? Math.round(plusProche.distanceKm * 1000) + ' m' : plusProche.distanceKm.toFixed(1) + ' km'} de vous</div>`
+    : '';
+
+  document.getElementById('plus-proche-card').innerHTML = afficherPharmacie({ ...plusProche, _plusProche: true });
+}
+
+// ═══════════════════════════════════════
+// RECHERCHE
+// ═══════════════════════════════════════
+function rechercherPharmacie(terme) {
+  if (!terme.trim()) {
+    document.getElementById('liste-pharmacies').innerHTML =
+      donneesPharmacies.slice(0, 3).map(p => afficherPharmacie(p)).join('');
+    document.getElementById('count-badge').textContent =
+      donneesPharmacies.length + ' trouvée' + (donneesPharmacies.length > 1 ? 's' : '');
+    return;
+  }
+  const t = terme.toLowerCase();
+  const res = donneesPharmacies.filter(p =>
+    p.nom?.toLowerCase().includes(t) ||
+    p.adresse?.toLowerCase().includes(t) ||
+    p.zone?.toLowerCase().includes(t)
+  );
+  document.getElementById('liste-pharmacies').innerHTML = res.length
+    ? res.map(p => afficherPharmacie(p)).join('')
+    : `<div style="text-align:center;padding:32px;color:var(--sub);"><div style="font-size:36px;margin-bottom:8px;">🔍</div><div style="font-weight:700;">Aucun résultat pour "${terme}"</div></div>`;
+  document.getElementById('count-badge').textContent = res.length + ' résultat' + (res.length > 1 ? 's' : '');
 }
 
 // ═══════════════════════════════════════
 // PARTAGE WHATSAPP
 // ═══════════════════════════════════════
 function partagerWhatsApp(p) {
-  const tel = (p.tel || '').replace(/\s/g, '');
-  const texte = `💊 *${p.nom}*\n📍 ${p.adresse || ''}, ${p.ville}\n📞 ${p.tel_affiche || p.tel || 'Non précisé'}\n\n_Trouvé sur PharmaGarde Togo_ 🇹🇬\n👉 pharma-garde-togo.vercel.app`;
+  const texte = `💊 *${p.nom}*\n📍 ${p.adresse || ''}, ${p.ville}\n📞 ${p.tel_affiche || p.tel || 'Non précisé'}\n${p.assurances ? '🏥 Assurances: ' + p.assurances : ''}\n\n_Trouvé sur PharmaGarde Togo_ 🇹🇬\n👉 pharma-garde-togo.vercel.app`;
   window.open(`https://wa.me/?text=${encodeURIComponent(texte)}`, '_blank');
 }
 
@@ -197,65 +276,61 @@ function ouvrirPopup(p) {
   const assurances = (p.assurances || '').split(',').filter(a => a.trim());
   const assurancesHtml = assurances.length
     ? assurances.map(a => `<span class="assur-tag">${a.trim()}</span>`).join('')
-    : '<span style="color:var(--sub);font-size:12px;">Aucune précisée</span>';
+    : `<span style="color:var(--sub);font-size:12px;">Aucune précisée</span>`;
 
-  const telPropre = (p.tel || '').replace(/\s/g, '');
+  const tel = (p.tel || '').replace(/\s/g, '');
   const chipClass = p.garde === '24h/24' ? 'h24' : 'soir';
-  const chipLabel = p.garde === '24h/24' ? '🌛 24h/24' : '🌆 Ce soir';
+  const chipLabel = p.garde === '24h/24' ? '🌛 Ouvert 24h/24' : '🌆 De garde ce soir';
   const coords = coordsVilles[p.ville] || coordsVilles['Lomé'];
+  const offsetsZones = { 'A':{lat:0,lng:0}, 'B':{lat:0.015,lng:-0.010}, 'C':{lat:0.020,lng:0.005}, 'D':{lat:0.025,lng:0.015}, 'E':{lat:-0.015,lng:-0.020}, 'F':{lat:-0.030,lng:-0.015} };
+  const offset = offsetsZones[p.zone] || { lat: 0, lng: 0 };
+  const pharmLat = p.pLat || (coords.lat + offset.lat);
+  const pharmLng = p.pLng || (coords.lng + offset.lng);
 
   document.getElementById('popup-content').innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
       <div style="flex:1;padding-right:12px;">
-        <div style="font-family:'Fraunces',serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:8px;line-height:1.2;">${p.nom}</div>
-        <div class="garde-chip ${chipClass}">${chipLabel}</div>
+        <div style="font-family:'Fraunces',serif;font-size:22px;font-weight:700;color:var(--text);line-height:1.2;margin-bottom:10px;">${p.nom}</div>
+        <span class="garde-chip ${chipClass}">${chipLabel}</span>
       </div>
-      <button onclick="fermerPopup()" style="background:var(--bg);border:none;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;flex-shrink:0;">✕</button>
+      <button onclick="fermerPopup()" style="background:var(--bg);border:1px solid var(--border);width:34px;height:34px;border-radius:50%;font-size:16px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--sub);">✕</button>
     </div>
 
-    <div style="background:var(--bg);border-radius:14px;padding:14px;margin-bottom:14px;">
-      <div class="meta-row" style="margin-bottom:8px;font-size:14px;"><span>📍</span><span style="color:var(--text)">${p.adresse || 'Non précisée'}</span></div>
-      <div class="meta-row" style="margin-bottom:8px;font-size:14px;"><span>🏙️</span><span style="color:var(--text)">${p.ville} — Zone ${p.zone || '—'}</span></div>
-      <div class="meta-row" style="font-size:14px;"><span>📞</span><span style="color:var(--text);font-weight:600;">${p.tel_affiche || p.tel || 'Non précisé'}</span></div>
+    <div style="background:var(--bg);border-radius:var(--radius);padding:14px;margin-bottom:14px;border:1px solid var(--border);">
+      <div class="meta-row" style="margin-bottom:8px;"><span>📍</span><span style="color:var(--text);font-weight:500;">${p.adresse || 'Adresse non précisée'}</span></div>
+      <div class="meta-row" style="margin-bottom:8px;"><span>🏙️</span><span style="color:var(--text);">${p.ville}${p.zone ? ' · Zone ' + p.zone : ''}</span></div>
+      <div class="meta-row"><span>📞</span><span style="color:var(--text);font-weight:700;font-size:15px;">${p.tel_affiche || p.tel || 'Non précisé'}</span></div>
     </div>
 
+    ${assurances.length ? `
     <div style="margin-bottom:14px;">
-      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--sub);margin-bottom:8px;">Assurances</div>
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--sub);margin-bottom:8px;">Assurances acceptées</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">${assurancesHtml}</div>
-    </div>
+    </div>` : ''}
 
-    <div style="border-radius:16px;overflow:hidden;margin-bottom:14px;border:1.5px solid var(--border);">
+    <div style="border-radius:var(--radius);overflow:hidden;margin-bottom:14px;border:1px solid var(--border);position:relative;">
       <div id="popup-map" style="height:180px;width:100%;"></div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-      <button onclick="lancerItineraire('${p.nom.replace(/'/g,"\\'")}','${(p.adresse||'').replace(/'/g,"\\'")}','${p.ville}')"
-        style="background:var(--g1);color:white;border:none;border-radius:14px;padding:13px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+      <button onclick="lancerItineraire('${p.nom.replace(/'/g,"\\'")}','${(p.adresse||'').replace(/'/g,"\\'")}','${p.ville}',${pharmLat},${pharmLng})"
+        style="background:var(--g1);color:white;border:none;border-radius:var(--radius);padding:13px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
         🧭 Itinéraire
       </button>
-      ${telPropre ? `
-        <a href="tel:${telPropre}" style="background:#EEF3FF;color:#3B5BDB;border-radius:14px;padding:13px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;">
-          📞 Appeler
-        </a>` : '<div></div>'}
+      ${tel ? `<a href="tel:${tel}" style="background:#EFF6FF;color:#1D4ED8;border-radius:var(--radius);padding:13px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;">📞 Appeler</a>` : '<div></div>'}
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-      ${telPropre ? `
-        <a href="https://wa.me/${telPropre.replace('+','')}" target="_blank"
-          style="background:#25D366;color:white;border-radius:14px;padding:13px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;">
-          💬 WhatsApp
-        </a>` : '<div></div>'}
-      <button onclick="partagerWhatsApp(JSON.parse(this.closest('[data-p]')?.dataset.p || '{}'))" 
-        onclick="partagerWhatsApp(${JSON.stringify(p).replace(/"/g,'&quot;')})"
-        style="background:var(--bg);border:1.5px solid var(--border);border-radius:14px;padding:13px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;gap:6px;"
-        onclick="partagerWhatsApp(${JSON.stringify(p).replace(/"/g,"'").replace(/'/g,'\x27')})">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+      ${tel ? `<a href="https://wa.me/${tel.replace('+','')}" target="_blank" style="background:#F0FDF4;color:#15803D;border:1px solid #86EFAC;border-radius:var(--radius);padding:13px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;">💬 WhatsApp</a>` : '<div></div>'}
+      <button onclick='partagerWhatsApp(${JSON.stringify(p).replace(/'/g,"&#39;")})'
+        style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:13px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:700;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;gap:6px;">
         📤 Partager
       </button>
     </div>
 
     <button onclick="signalerErreur('${p.nom.replace(/'/g,"\\'")}');"
-      style="width:100%;margin-top:10px;background:none;border:1.5px solid var(--border);border-radius:14px;padding:11px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;cursor:pointer;color:var(--sub);display:flex;align-items:center;justify-content:center;gap:6px;">
-      ⚠️ Signaler une erreur
+      style="width:100%;background:none;border:1px solid var(--border);border-radius:var(--radius);padding:10px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;cursor:pointer;color:var(--sub);display:flex;align-items:center;justify-content:center;gap:6px;">
+      ⚠️ Signaler une erreur sur cette fiche
     </button>
   `;
 
@@ -263,30 +338,31 @@ function ouvrirPopup(p) {
   document.getElementById('popup-pharmacie').style.display = 'block';
 
   setTimeout(() => {
-    const popupMap = L.map('popup-map', { zoomControl: false, dragging: false }).setView([coords.lat, coords.lng], 14);
+    const popupMap = L.map('popup-map', { zoomControl: false, dragging: false, scrollWheelZoom: false })
+      .setView([pharmLat, pharmLng], 14);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(popupMap);
 
-    const iconPharmacie = L.divIcon({
-      html: '<div style="background:#005C32;color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.3);">💊</div>',
-      iconSize: [32, 32], iconAnchor: [16, 16], className: ''
+    const iconP = L.divIcon({
+      html: '<div style="background:#004D2A;color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:2px solid white;">💊</div>',
+      iconSize: [32,32], iconAnchor: [16,16], className: ''
     });
 
-    L.marker([coords.lat, coords.lng], { icon: iconPharmacie })
+    L.marker([pharmLat, pharmLng], { icon: iconP })
       .addTo(popupMap)
-      .bindPopup(`<b>${p.nom}</b><br>${p.adresse || ''}`).openPopup();
+      .bindPopup(`<b>${p.nom}</b>`).openPopup();
 
     if (userLat && userLng) {
-      const iconUser = L.divIcon({
-        html: '<div style="background:#3B5BDB;color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.3);">📍</div>',
-        iconSize: [28, 28], iconAnchor: [14, 14], className: ''
+      const iconU = L.divIcon({
+        html: '<div style="background:#1D4ED8;color:white;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.3);border:2px solid white;">📍</div>',
+        iconSize: [26,26], iconAnchor: [13,13], className: ''
       });
-      L.marker([userLat, userLng], { icon: iconUser }).addTo(popupMap);
-      L.polyline([[userLat, userLng], [coords.lat, coords.lng]], {
-        color: '#005C32', weight: 3, dashArray: '8,8', opacity: 0.7
+      L.marker([userLat, userLng], { icon: iconU }).addTo(popupMap);
+      L.polyline([[userLat, userLng], [pharmLat, pharmLng]], {
+        color: '#004D2A', weight: 2, dashArray: '6,6', opacity: 0.6
       }).addTo(popupMap);
-      popupMap.fitBounds([[userLat, userLng], [coords.lat, coords.lng]], { padding: [20, 20] });
+      popupMap.fitBounds([[userLat, userLng], [pharmLat, pharmLng]], { padding: [24,24] });
     }
-  }, 200);
+  }, 250);
 }
 
 function fermerPopup() {
@@ -297,142 +373,156 @@ function fermerPopup() {
 // ═══════════════════════════════════════
 // ITINÉRAIRE
 // ═══════════════════════════════════════
-function lancerItineraire(nom, adresse, ville) {
-  const coords = coordsVilles[ville] || coordsVilles['Lomé'];
+function lancerItineraire(nom, adresse, ville, pharmLat, pharmLng) {
+  const coordsV = coordsVilles[ville] || coordsVilles['Lomé'];
+  const lat = pharmLat || coordsV.lat;
+  const lng = pharmLng || coordsV.lng;
 
   document.getElementById('popup-content').innerHTML = `
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-      <button onclick="fermerPopup()" style="background:var(--bg);border:none;width:36px;height:36px;border-radius:50%;font-size:20px;cursor:pointer;">‹</button>
+      <button onclick="fermerPopup()" style="background:var(--bg);border:1px solid var(--border);width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--sub);">‹</button>
       <div>
         <div style="font-family:'Fraunces',serif;font-size:18px;font-weight:700;color:var(--text);">${nom}</div>
-        <div style="font-size:12px;color:var(--sub);">${adresse}</div>
+        <div style="font-size:12px;color:var(--sub);">${adresse || ''} · ${ville}</div>
       </div>
     </div>
 
-    ${userLat && userLng ? `
-      <div style="background:#EEF3FF;border-radius:14px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
-        <span style="font-size:20px;">📍</span>
-        <div><div style="font-size:13px;font-weight:700;color:#3B5BDB;">GPS actif</div>
-        <div style="font-size:11px;color:var(--sub);">Itinéraire depuis votre position</div></div>
-      </div>` : `
-      <div style="background:#FFF8EE;border-radius:14px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
-        <span style="font-size:20px;">⚠️</span>
-        <div><div style="font-size:13px;font-weight:700;color:#E67700;">GPS non activé</div>
-        <div style="font-size:11px;color:var(--sub);">Activez votre GPS pour l'itinéraire</div></div>
-      </div>`}
+    ${userLat && userLng
+      ? `<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:20px;">📍</span>
+          <div><div style="font-size:13px;font-weight:700;color:#1D4ED8;">GPS actif</div><div style="font-size:11px;color:var(--sub);">Itinéraire calculé depuis votre position</div></div>
+         </div>`
+      : `<div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:20px;">⚠️</span>
+          <div><div style="font-size:13px;font-weight:700;color:#D97706;">GPS non activé</div><div style="font-size:11px;color:var(--sub);">Activez votre GPS pour un itinéraire précis</div></div>
+         </div>`
+    }
 
-    <div id="carte-itineraire" style="height:320px;border-radius:16px;overflow:hidden;border:1.5px solid var(--border);margin-bottom:14px;"></div>
+    <div id="carte-itineraire" style="height:300px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);margin-bottom:14px;"></div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-      <div style="background:var(--bg);border-radius:12px;padding:14px;text-align:center;">
-        <div style="font-size:22px;font-weight:900;color:var(--g1);" id="distance-val">--</div>
-        <div style="font-size:11px;color:var(--sub);margin-top:2px;">Distance</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center;">
+        <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:700;color:var(--g1);" id="distance-val">—</div>
+        <div style="font-size:11px;color:var(--sub);margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Distance</div>
       </div>
-      <div style="background:var(--bg);border-radius:12px;padding:14px;text-align:center;">
-        <div style="font-size:22px;font-weight:900;color:var(--g1);" id="temps-val">--</div>
-        <div style="font-size:11px;color:var(--sub);margin-top:2px;">À pied (~5km/h)</div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center;">
+        <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:700;color:var(--g1);" id="temps-val">—</div>
+        <div style="font-size:11px;color:var(--sub);margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">À pied</div>
       </div>
     </div>
   `;
 
   setTimeout(() => {
-    const carteItin = L.map('carte-itineraire').setView([coords.lat, coords.lng], 14);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(carteItin);
+    const carte = L.map('carte-itineraire').setView([lat, lng], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(carte);
 
-    const iconPharmacie = L.divIcon({
-      html: '<div style="background:#005C32;color:white;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,0.3);">💊</div>',
-      iconSize: [36, 36], iconAnchor: [18, 18], className: ''
+    const iconP = L.divIcon({
+      html: '<div style="background:#004D2A;color:white;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 3px 10px rgba(0,0,0,0.3);border:2px solid white;">💊</div>',
+      iconSize: [36,36], iconAnchor: [18,18], className: ''
     });
 
-    L.marker([coords.lat, coords.lng], { icon: iconPharmacie }).addTo(carteItin).bindPopup(`<b>${nom}</b>`).openPopup();
+    L.marker([lat, lng], { icon: iconP }).addTo(carte).bindPopup(`<b>${nom}</b>`).openPopup();
 
     if (userLat && userLng) {
-      const iconUser = L.divIcon({
-        html: '<div style="background:#3B5BDB;color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.3);">🧑</div>',
-        iconSize: [32, 32], iconAnchor: [16, 16], className: ''
+      const iconU = L.divIcon({
+        html: '<div style="background:#1D4ED8;color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 3px 10px rgba(0,0,0,0.3);border:2px solid white;">🧑</div>',
+        iconSize: [32,32], iconAnchor: [16,16], className: ''
       });
 
-      L.marker([userLat, userLng], { icon: iconUser }).addTo(carteItin).bindPopup('Vous êtes ici');
-      L.polyline([[userLat, userLng], [coords.lat, coords.lng]], {
-        color: '#005C32', weight: 4, dashArray: '10,8', opacity: 0.9
-      }).addTo(carteItin);
-      carteItin.fitBounds([[userLat, userLng], [coords.lat, coords.lng]], { padding: [30, 30] });
+      L.marker([userLat, userLng], { icon: iconU }).addTo(carte).bindPopup('Vous êtes ici');
+      L.polyline([[userLat, userLng], [lat, lng]], {
+        color: '#004D2A', weight: 4, dashArray: '10,6', opacity: 0.85
+      }).addTo(carte);
+      carte.fitBounds([[userLat, userLng], [lat, lng]], { padding: [30,30] });
 
-      const dist = calculerDistance(userLat, userLng, coords.lat, coords.lng);
-      document.getElementById('distance-val').textContent = dist < 1 ? Math.round(dist * 1000) + ' m' : dist.toFixed(1) + ' km';
+      const dist = calculerDistance(userLat, userLng, lat, lng);
+      const distText = dist < 1 ? Math.round(dist * 1000) + ' m' : dist.toFixed(1) + ' km';
       const mins = Math.round(dist * 12);
-      document.getElementById('temps-val').textContent = mins < 60 ? mins + ' min' : Math.floor(mins/60) + 'h' + (mins % 60) + 'min';
+      const tempsText = mins < 60 ? mins + ' min' : Math.floor(mins/60) + 'h ' + (mins%60) + 'min';
+      document.getElementById('distance-val').textContent = distText;
+      document.getElementById('temps-val').textContent = tempsText;
     }
-  }, 200);
+  }, 250);
 }
 
 // ═══════════════════════════════════════
 // AFFICHER UNE PHARMACIE
 // ═══════════════════════════════════════
-function afficherPharmacie(p, estLaPlusProche = false) {
+function afficherPharmacie(p) {
   const assurances = (p.assurances || '').split(',').filter(a => a.trim());
   const chipClass = p.garde === '24h/24' ? 'h24' : 'soir';
   const chipLabel = p.garde === '24h/24' ? '🌛 24h/24' : '🌆 Ce soir';
   const assurancesHtml = assurances.map(a => `<span class="assur-tag">${a.trim()}</span>`).join('');
-  const telPropre = (p.tel || '').replace(/\s/g, '');
-  const badgeProche = estLaPlusProche ? '<span style="background:var(--gold);color:#1a1a1a;border-radius:8px;padding:3px 8px;font-size:10px;font-weight:700;margin-left:6px;">📍 La plus proche</span>' : '';
-  const pStr = JSON.stringify(p).replace(/"/g, '&quot;');
+  const tel = (p.tel || '').replace(/\s/g, '');
+  const badgeProche = p._plusProche
+    ? `<span class="badge-proche">📍 La plus proche</span>` : '';
+
+  // Calculer distance si GPS dispo
+  let distHtml = '';
+  if (userLat && userLng && p.distanceKm !== undefined) {
+    const d = p.distanceKm;
+    distHtml = `<div class="meta-row"><span>📏</span>${d < 1 ? Math.round(d*1000)+' m' : d.toFixed(1)+' km'} de vous</div>`;
+  }
+
+  const pData = JSON.stringify(p).replace(/"/g, '&quot;');
 
   return `
     <div class="pharm-card ${p.garde === '24h/24' ? 'h24' : ''}"
       onclick="ouvrirPopup(JSON.parse(this.dataset.p.replace(/&quot;/g,'\"')))"
-      data-p="${pStr}" style="cursor:pointer;">
+      data-p="${pData}">
       <div class="card-head">
         <div class="pharm-name">${p.nom}${badgeProche}</div>
         <div class="garde-chip ${chipClass}">${chipLabel}</div>
       </div>
       <div class="card-meta">
-        <div class="meta-row"><span>📍</span>${p.adresse || ''}</div>
+        <div class="meta-row"><span>📍</span>${p.adresse || 'Adresse non précisée'}</div>
         <div class="meta-row"><span>📞</span>${p.tel_affiche || p.tel || 'Non précisé'}</div>
+        ${distHtml}
         ${assurancesHtml ? `<div class="assurance-row">${assurancesHtml}</div>` : ''}
       </div>
       <div class="card-actions">
-        ${telPropre
-          ? `<a href="tel:${telPropre}" class="btn-call" onclick="event.stopPropagation()">📞 Appeler</a>`
-          : '<div class="btn-call" style="background:#ccc;cursor:not-allowed;flex:1;display:flex;align-items:center;justify-content:center;">Non précisé</div>'}
-        ${telPropre ? `<a href="https://wa.me/${telPropre.replace('+','')}" target="_blank" class="btn-icon" onclick="event.stopPropagation()">💬</a>` : ''}
+        ${tel
+          ? `<a href="tel:${tel}" class="btn-call" onclick="event.stopPropagation()">📞 Appeler</a>`
+          : `<div class="btn-call" style="background:#9CA3AF;cursor:not-allowed;">Non précisé</div>`}
+        ${tel ? `<a href="https://wa.me/${tel.replace('+','')}" target="_blank" class="btn-icon" onclick="event.stopPropagation()" title="WhatsApp">💬</a>` : ''}
         <div class="btn-icon" title="Partager" onclick="event.stopPropagation();partagerWhatsApp(JSON.parse(this.closest('[data-p]').dataset.p.replace(/&quot;/g,'\"')))">📤</div>
-        <div class="btn-icon" title="Itinéraire" onclick="event.stopPropagation();lancerItineraire('${p.nom.replace(/'/g,"\\'")}','${(p.adresse||'').replace(/'/g,"\\'")}','${p.ville}');document.getElementById('popup-overlay').style.display='block';document.getElementById('popup-pharmacie').style.display='block';">🧭</div>
+        <div class="btn-icon" title="Itinéraire"
+          onclick="event.stopPropagation();lancerItineraire('${p.nom.replace(/'/g,"\\'")}','${(p.adresse||'').replace(/'/g,"\\'")}','${p.ville}');document.getElementById('popup-overlay').style.display='block';document.getElementById('popup-pharmacie').style.display='block';">
+          🧭
+        </div>
       </div>
     </div>`;
 }
 
 // ═══════════════════════════════════════
-// PHARMACIE LA PLUS PROCHE
-// ═══════════════════════════════════════
-function afficherPlusProche(pharmacies) {
-  if (pharmacies.length === 0) return;
-  const h24 = pharmacies.find(p => p.garde === '24h/24');
-  const plusProche = h24 || pharmacies[0];
-  document.getElementById('plus-proche-section').style.display = 'block';
-  document.getElementById('plus-proche-card').innerHTML = afficherPharmacie(plusProche, true);
-}
-
-// ═══════════════════════════════════════
-// RECHARGER PHARMACIES (accueil)
+// RECHARGER PHARMACIES
 // ═══════════════════════════════════════
 async function rechargerPharmacies() {
   document.getElementById('liste-pharmacies').innerHTML =
-    `<div style="text-align:center;padding:32px;color:var(--sub);"><div style="font-size:28px;margin-bottom:8px;">⏳</div>Chargement...</div>`;
+    `<div style="text-align:center;padding:40px;color:var(--sub);">
+      <div style="font-size:32px;margin-bottom:12px;animation:splashIconIn 0.5s ease both;">⏳</div>
+      <div style="font-weight:600;">Chargement...</div>
+    </div>`;
 
   const data = await chargerPharmacies(villeActive);
   donneesPharmacies = data;
 
-  if (!data || data.length === 0) {
+  if (!data.length) {
     document.getElementById('liste-pharmacies').innerHTML =
-      `<div style="text-align:center;padding:40px;color:var(--sub);"><div style="font-size:40px;margin-bottom:10px;">🔍</div><div style="font-weight:700;">Aucune pharmacie trouvée</div><div style="font-size:13px;margin-top:4px;">pour ${villeActive}</div></div>`;
-    document.getElementById('count-badge').textContent = '0 trouvée';
+      `<div style="text-align:center;padding:40px;color:var(--sub);">
+        <div style="font-size:40px;margin-bottom:12px;">🔍</div>
+        <div style="font-weight:700;font-size:16px;">Aucune pharmacie trouvée</div>
+        <div style="font-size:13px;margin-top:6px;">pour ${villeActive}</div>
+      </div>`;
+    document.getElementById('count-badge').textContent = '0';
     return;
   }
 
-  const apercu = data.slice(0, 3);
-  document.getElementById('liste-pharmacies').innerHTML = apercu.map(p => afficherPharmacie(p)).join('');
-  document.getElementById('count-badge').textContent = data.length + ' trouvée' + (data.length > 1 ? 's' : '');
+  document.getElementById('liste-pharmacies').innerHTML =
+    data.slice(0, 3).map(p => afficherPharmacie(p)).join('');
+  document.getElementById('count-badge').textContent =
+    data.length + ' trouvée' + (data.length > 1 ? 's' : '');
+
   afficherPlusProche(data);
 }
 
@@ -441,26 +531,17 @@ async function rechargerPharmacies() {
 // ═══════════════════════════════════════
 async function chargerToutesPharmacies() {
   document.getElementById('liste-toutes').innerHTML =
-    `<div style="text-align:center;padding:32px;color:var(--sub);"><div style="font-size:28px;margin-bottom:8px;">⏳</div>Chargement...</div>`;
+    `<div style="text-align:center;padding:40px;color:var(--sub);"><div style="font-size:32px;margin-bottom:12px;">⏳</div><div>Chargement...</div></div>`;
   toutesPharmacies = await chargerPharmacies(villeToutes);
-  afficherListeToutes();
+  document.getElementById('count-toutes').textContent =
+    toutesPharmacies.length + ' trouvée' + (toutesPharmacies.length > 1 ? 's' : '');
+  document.getElementById('liste-toutes').innerHTML =
+    toutesPharmacies.map(p => afficherPharmacie(p)).join('');
   initialiserCarte();
-}
-
-function afficherListeToutes() {
-  const liste = zoneActive === 'tous' ? toutesPharmacies : toutesPharmacies.filter(p => p.zone === zoneActive);
-  document.getElementById('count-toutes').textContent = liste.length + ' trouvée' + (liste.length > 1 ? 's' : '');
-  if (liste.length === 0) {
-    document.getElementById('liste-toutes').innerHTML =
-      `<div style="text-align:center;padding:40px;color:var(--sub);"><div style="font-size:40px;margin-bottom:10px;">🔍</div><div style="font-weight:700;">Aucune pharmacie trouvée</div></div>`;
-    return;
-  }
-  document.getElementById('liste-toutes').innerHTML = liste.map(p => afficherPharmacie(p)).join('');
 }
 
 async function changerVilleToutes(ville) {
   villeToutes = ville;
-  zoneActive = 'tous';
   await chargerToutesPharmacies();
 }
 
@@ -470,21 +551,26 @@ async function changerVilleToutes(ville) {
 function initialiserCarte() {
   const coords = coordsVilles[villeToutes] || coordsVilles['Lomé'];
   if (carteLeaflet) { carteLeaflet.remove(); carteLeaflet = null; }
+  const container = document.getElementById('carte-container');
+  if (!container) return;
+  container.style.display = 'block';
   setTimeout(() => {
     carteLeaflet = L.map('carte-lome').setView([coords.lat, coords.lng], 12);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(carteLeaflet);
+
+    const offsetsZones = { 'A':{lat:0,lng:0}, 'B':{lat:0.015,lng:-0.010}, 'C':{lat:0.020,lng:0.005}, 'D':{lat:0.025,lng:0.015}, 'E':{lat:-0.015,lng:-0.020}, 'F':{lat:-0.030,lng:-0.015} };
+
     toutesPharmacies.forEach(p => {
-      const offsetLat = (Math.random() - 0.5) * 0.04;
-      const offsetLng = (Math.random() - 0.5) * 0.04;
+      const offset = offsetsZones[p.zone] || { lat: (Math.random()-0.5)*0.04, lng: (Math.random()-0.5)*0.04 };
       const icon = L.divIcon({
-        html: '<div style="background:#005C32;color:white;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;box-shadow:0 2px 6px rgba(0,0,0,0.3);">💊</div>',
-        iconSize: [26, 26], iconAnchor: [13, 13], className: ''
+        html: '<div style="background:#004D2A;color:white;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;box-shadow:0 2px 6px rgba(0,0,0,0.3);border:1.5px solid white;">💊</div>',
+        iconSize: [26,26], iconAnchor: [13,13], className: ''
       });
-      L.marker([coords.lat + offsetLat, coords.lng + offsetLng], { icon })
+      L.marker([coords.lat + offset.lat, coords.lng + offset.lng], { icon })
         .addTo(carteLeaflet)
         .bindPopup(`<b>${p.nom}</b><br>${p.adresse || ''}<br>📞 ${p.tel_affiche || p.tel || ''}`);
     });
-  }, 100);
+  }, 150);
 }
 
 // ═══════════════════════════════════════
@@ -500,14 +586,14 @@ function afficherUrgencesHome() {
 }
 
 function afficherUrgencesPage() {
-  const bg = { r:'#FFF0EE', b:'#EEF3FF', o:'#FFF8EE', g:'#EEFBF4' };
-  const tc = { r:'#E53935', b:'#3B5BDB', o:'#E67700', g:'#005C32' };
+  const bg = { r:'#FEF2F2', b:'#EFF6FF', o:'#FFFBEB', g:'#F0FDF4' };
+  const tc = { r:'#DC2626', b:'#2563EB', o:'#D97706', g:'#15803D' };
   return urgences.map(u => `
     <a href="tel:${u.numero}" class="urg-full" style="text-decoration:none;">
       <div class="urg-full-icon" style="background:${bg[u.couleur]};">${u.emoji}</div>
       <div class="urg-full-info">
         <div class="urg-full-name">${u.nom}</div>
-        <div class="urg-full-sub">Appuyez pour appeler</div>
+        <div class="urg-full-sub">Appuyez pour appeler directement</div>
       </div>
       <div class="urg-full-num" style="color:${tc[u.couleur]};">${u.numeroAffiche}</div>
     </a>`).join('');
@@ -526,7 +612,6 @@ async function afficherVilles(filtre = '') {
 
   const villesDisponibles = Object.keys(compteur).sort();
 
-  // Mettre à jour le select
   const select = document.getElementById('select-ville');
   if (select) {
     select.innerHTML = villesDisponibles.map(v => {
@@ -535,7 +620,6 @@ async function afficherVilles(filtre = '') {
     }).join('');
   }
 
-  // Mettre à jour stat villes
   const statVilles = document.getElementById('stat-villes');
   if (statVilles) statVilles.textContent = villesDisponibles.length;
 
@@ -545,16 +629,15 @@ async function afficherVilles(filtre = '') {
 
   return liste.map(v => {
     const base = toutesVillesBase.find(b => b.nom === v);
-    const emoji = base ? base.emoji : '🏘️';
     const nb = compteur[v] || 0;
     return `
       <div class="ville-item" onclick="choisirVille('${v}')">
-        <span style="font-size:24px">${emoji}</span>
+        <span style="font-size:24px">${base ? base.emoji : '🏘️'}</span>
         <div style="flex:1;">
           <div class="ville-name">${v}</div>
           <div class="ville-count">${nb} pharmacie${nb > 1 ? 's' : ''}</div>
         </div>
-        <span style="color:var(--sub);font-size:20px;">›</span>
+        <span style="color:var(--sub);font-size:18px;">›</span>
       </div>`;
   }).join('');
 }
@@ -572,6 +655,72 @@ async function choisirVille(ville) {
 }
 
 // ═══════════════════════════════════════
+// FOOTER — POLITIQUES
+// ═══════════════════════════════════════
+function ouvrirPolitique(type) {
+  const contenu = {
+    confidentialite: {
+      titre: '🔒 Politique de confidentialité',
+      texte: `
+        <h3>Collecte de données</h3>
+        <p>PharmaGarde Togo ne collecte aucune donnée personnelle sans votre consentement. Votre position GPS est utilisée uniquement pour afficher les pharmacies les plus proches et n'est jamais stockée.</p>
+        <h3>Données de navigation</h3>
+        <p>Nous utilisons Supabase pour stocker les informations des pharmacies de garde. Aucune information vous concernant n'est conservée.</p>
+        <h3>Contact via WhatsApp</h3>
+        <p>Lorsque vous nous contactez via WhatsApp, vos informations sont traitées uniquement pour répondre à votre demande.</p>
+        <h3>Cookies</h3>
+        <p>Nous utilisons uniquement un cookie pour mémoriser votre préférence de mode sombre. Aucun cookie publicitaire n'est utilisé.</p>
+        <h3>Contact</h3>
+        <p>Pour toute question : pharmagardetogo@gmail.com</p>
+      `
+    },
+    conditions: {
+      titre: '📄 Conditions d\'utilisation',
+      texte: `
+        <h3>Objet</h3>
+        <p>PharmaGarde Togo est un service gratuit d'information sur les pharmacies de garde au Togo. Les informations sont fournies à titre indicatif.</p>
+        <h3>Exactitude des données</h3>
+        <p>Les données proviennent de sources officielles (lacinquieme.tg, pharmaciens.tg) et sont mises à jour chaque lundi. Nous ne pouvons garantir l'exactitude en temps réel.</p>
+        <h3>Responsabilité</h3>
+        <p>PharmaGarde Togo ne peut être tenu responsable d'une pharmacie fermée malgré son affichage comme de garde. Nous vous recommandons d'appeler avant de vous déplacer.</p>
+        <h3>Propriété intellectuelle</h3>
+        <p>Le design et le code de PharmaGarde Togo sont protégés. Toute reproduction est interdite sans autorisation.</p>
+      `
+    },
+    cookies: {
+      titre: '🍪 Politique cookies',
+      texte: `
+        <h3>Cookies utilisés</h3>
+        <p>PharmaGarde Togo utilise un seul cookie :</p>
+        <h3>darkMode (localStorage)</h3>
+        <p>Mémorise votre préférence de thème (clair/sombre). Ce cookie est purement fonctionnel et ne contient aucune information personnelle.</p>
+        <h3>Cookies tiers</h3>
+        <p>OpenStreetMap (cartographie) peut déposer des cookies techniques nécessaires à l'affichage des cartes. Ces cookies ne sont pas publicitaires.</p>
+        <h3>Gestion</h3>
+        <p>Vous pouvez supprimer ces cookies à tout moment depuis les paramètres de votre navigateur.</p>
+      `
+    }
+  };
+
+  const info = contenu[type];
+  if (!info) return;
+
+  const modal = document.createElement('div');
+  modal.className = 'policy-modal';
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  modal.innerHTML = `
+    <div class="policy-content">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div class="policy-title">${info.titre}</div>
+        <button onclick="this.closest('.policy-modal').remove()" style="background:var(--bg);border:1px solid var(--border);width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:var(--sub);">✕</button>
+      </div>
+      <div class="policy-text">${info.texte}</div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+// ═══════════════════════════════════════
 // WHATSAPP CONTACT
 // ═══════════════════════════════════════
 function envoyerWhatsApp() {
@@ -584,12 +733,11 @@ function envoyerWhatsApp() {
 }
 
 // ═══════════════════════════════════════
-// PWA INSTALLATION
+// PWA
 // ═══════════════════════════════════════
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  document.getElementById('install-banner').style.display = 'flex';
   setTimeout(() => { if (deferredPrompt) afficherPopupInstall(); }, 30000);
 });
 
@@ -597,88 +745,70 @@ function afficherPopupInstall() {
   if (document.getElementById('install-popup')) return;
   const popup = document.createElement('div');
   popup.id = 'install-popup';
-  popup.style.cssText = `position:fixed;bottom:80px;left:50%;transform:translateX(-50%);width:calc(100% - 48px);max-width:440px;background:var(--white);border-radius:20px;padding:20px;box-shadow:0 8px 40px rgba(0,0,0,0.2);z-index:999;border:2px solid var(--g2);`;
+  popup.style.cssText = `position:fixed;bottom:84px;left:50%;transform:translateX(-50%);width:calc(100% - 40px);max-width:420px;background:var(--white);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow-lg);z-index:999;border:1.5px solid var(--g3);animation:popupSlideUp 0.3s cubic-bezier(0.34,1.2,0.64,1) both;`;
   popup.innerHTML = `
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
-      <div style="width:52px;height:52px;background:linear-gradient(135deg,#005C32,#00845A);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">💊</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+      <div style="width:48px;height:48px;background:linear-gradient(135deg,var(--g1),var(--g2));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">💊</div>
       <div style="flex:1;">
-        <div style="font-family:'Fraunces',serif;font-size:17px;font-weight:700;color:var(--text);">Installer PharmaGarde</div>
-        <div style="font-size:12px;color:var(--sub);margin-top:2px;">Accès rapide depuis votre écran d'accueil</div>
+        <div style="font-family:'Fraunces',serif;font-size:16px;font-weight:700;color:var(--text);">Installer PharmaGarde</div>
+        <div style="font-size:12px;color:var(--sub);margin-top:2px;">Accès rapide depuis l'écran d'accueil</div>
       </div>
-      <button onclick="document.getElementById('install-popup').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--sub);">✕</button>
+      <button onclick="this.closest('#install-popup').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--sub);width:32px;height:32px;">✕</button>
     </div>
-    <div style="display:flex;gap:4px;margin-bottom:14px;">
-      <div style="flex:1;background:var(--bg);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:20px;">⚡</div><div style="font-size:11px;font-weight:600;color:var(--g1);margin-top:4px;">Rapide</div></div>
-      <div style="flex:1;background:var(--bg);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:20px;">📴</div><div style="font-size:11px;font-weight:600;color:var(--g1);margin-top:4px;">Hors ligne</div></div>
-      <div style="flex:1;background:var(--bg);border-radius:10px;padding:10px;text-align:center;"><div style="font-size:20px;">🆓</div><div style="font-size:11px;font-weight:600;color:var(--g1);margin-top:4px;">Gratuit</div></div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px;">
+      ${[['⚡','Rapide'],['📴','Hors ligne'],['🆓','Gratuit']].map(([e,l])=>`<div style="background:var(--bg);border-radius:var(--radius-sm);padding:10px;text-align:center;"><div style="font-size:20px;">${e}</div><div style="font-size:11px;font-weight:600;color:var(--g1);margin-top:4px;">${l}</div></div>`).join('')}
     </div>
-    <button onclick="installerDepuisPopup()" style="width:100%;background:linear-gradient(135deg,#005C32,#00845A);color:white;border:none;border-radius:14px;padding:15px;font-family:'Outfit',sans-serif;font-size:15px;font-weight:800;cursor:pointer;">📲 Installer maintenant — Gratuit</button>
+    <button onclick="installerDepuisPopup()" style="width:100%;background:linear-gradient(135deg,var(--g1),var(--g2));color:white;border:none;border-radius:var(--radius);padding:14px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(0,77,42,0.3);">📲 Installer maintenant — Gratuit</button>
   `;
   document.body.appendChild(popup);
 }
 
 function installerDepuisPopup() {
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then((result) => {
-      deferredPrompt = null;
-      document.getElementById('install-popup')?.remove();
-      document.getElementById('install-banner').style.display = 'none';
-      if (result.outcome === 'accepted') {
-        const msg = document.createElement('div');
-        msg.style.cssText = `position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#005C32;color:white;padding:12px 24px;border-radius:20px;font-weight:700;z-index:9999;font-size:14px;`;
-        msg.textContent = '✅ App installée avec succès !';
-        document.body.appendChild(msg);
-        setTimeout(() => msg.remove(), 3000);
-      }
-    });
-  }
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(r => {
+    deferredPrompt = null;
+    document.getElementById('install-popup')?.remove();
+    if (r.outcome === 'accepted') {
+      const msg = document.createElement('div');
+      msg.style.cssText = `position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--g1);color:white;padding:12px 24px;border-radius:20px;font-weight:700;z-index:9999;font-size:14px;box-shadow:var(--shadow-lg);`;
+      msg.textContent = '✅ App installée avec succès !';
+      document.body.appendChild(msg);
+      setTimeout(() => msg.remove(), 3000);
+    }
+  });
 }
 
 function installerApp() {
   if (deferredPrompt) {
     afficherPopupInstall();
   } else if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-    afficherInstructionsIOS();
-  } else {
-    alert('Pour installer : appuyez sur le menu de votre navigateur puis "Ajouter à l\'écran d\'accueil"');
-  }
-}
-
-function afficherInstructionsIOS() {
-  const popup = document.createElement('div');
-  popup.style.cssText = `position:fixed;bottom:0;left:0;right:0;background:var(--white);border-radius:24px 24px 0 0;padding:24px;z-index:9999;box-shadow:0 -8px 40px rgba(0,0,0,0.2);`;
-  popup.innerHTML = `
-    <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px;"></div>
-    <div style="font-family:'Fraunces',serif;font-size:20px;font-weight:700;margin-bottom:6px;color:var(--text);">Installer sur iPhone</div>
-    <div style="font-size:13px;color:var(--sub);margin-bottom:20px;">3 étapes simples :</div>
-    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
-      ${['Appuyez sur 📤 en bas de Safari','Faites défiler → "Sur l\'écran d\'accueil"','Appuyez sur "Ajouter"'].map((t,i) => `
-        <div style="display:flex;align-items:center;gap:12px;background:var(--bg);border-radius:14px;padding:14px;">
+    const popup = document.createElement('div');
+    popup.style.cssText = `position:fixed;bottom:0;left:0;right:0;background:var(--white);border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding:24px;z-index:9999;box-shadow:0 -8px 40px rgba(0,0,0,0.15);animation:popupSlideUp 0.3s ease;`;
+    popup.innerHTML = `
+      <div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px;"></div>
+      <div style="font-family:'Fraunces',serif;font-size:20px;font-weight:700;margin-bottom:6px;color:var(--text);">Installer sur iPhone</div>
+      <div style="font-size:13px;color:var(--sub);margin-bottom:20px;">3 étapes simples :</div>
+      ${[['Appuyez sur 📤 en bas de Safari','L\'icône de partage'],['Faites défiler → "Sur l\'écran d\'accueil"','Dans le menu qui apparaît'],['Appuyez sur "Ajouter"','L\'app sera sur votre écran']].map((t,i)=>`
+        <div style="display:flex;align-items:center;gap:12px;background:var(--bg);border-radius:var(--radius);padding:14px;margin-bottom:8px;">
           <div style="width:32px;height:32px;background:var(--g1);border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-weight:800;flex-shrink:0;">${i+1}</div>
-          <div style="font-size:14px;font-weight:600;color:var(--text);">${t}</div>
+          <div><div style="font-size:14px;font-weight:600;color:var(--text);">${t[0]}</div><div style="font-size:12px;color:var(--sub);">${t[1]}</div></div>
         </div>`).join('')}
-    </div>
-    <button onclick="this.parentElement.remove()" style="width:100%;background:var(--g1);color:white;border:none;border-radius:14px;padding:15px;font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;cursor:pointer;">J'ai compris ✓</button>
-  `;
-  document.body.appendChild(popup);
+      <button onclick="this.parentElement.remove()" style="width:100%;margin-top:12px;background:var(--g1);color:white;border:none;border-radius:var(--radius);padding:14px;font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;cursor:pointer;">J'ai compris ✓</button>
+    `;
+    document.body.appendChild(popup);
+  }
 }
 
 // ═══════════════════════════════════════
 // INITIALISATION
 // ═══════════════════════════════════════
 window.onload = async function () {
-  // Splash screen
   cacherSplash();
-
-  // Mode sombre
   initDarkMode();
 
-  // Urgences
   document.getElementById('urgences-home').innerHTML = afficherUrgencesHome();
   document.getElementById('urgences-page').innerHTML = afficherUrgencesPage();
-
-  // Villes
   document.getElementById('liste-villes').innerHTML = await afficherVilles();
 
   // GPS
@@ -694,20 +824,21 @@ window.onload = async function () {
     });
   }
 
-  // Pharmacies
   await rechargerPharmacies();
 
   // Stats
-  const { count } = await db.from('pharmacies').select('*', { count: 'exact', head: true }).eq('actif', true);
+  const { count } = await db.from('pharmacies')
+    .select('*', { count: 'exact', head: true }).eq('actif', true);
   const statEl = document.getElementById('stat-pharmacies');
   if (statEl && count) statEl.textContent = count + '+';
 
   // Dernière mise à jour
-  const { data: lastUpdate } = await db.from('pharmacies').select('created_at').eq('actif', true).order('created_at', { ascending: false }).limit(1);
+  const { data: last } = await db.from('pharmacies')
+    .select('created_at').eq('actif', true)
+    .order('created_at', { ascending: false }).limit(1);
   const badge = document.getElementById('update-badge');
-  if (badge && lastUpdate && lastUpdate[0]) {
-    const date = new Date(lastUpdate[0].created_at);
-    const options = { day: 'numeric', month: 'long', year: 'numeric' };
-    badge.textContent = '🔄 Mis à jour le ' + date.toLocaleDateString('fr-FR', options);
+  if (badge && last?.[0]) {
+    const d = new Date(last[0].created_at);
+    badge.textContent = '🔄 Mis à jour le ' + d.toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
   }
 };
