@@ -433,32 +433,47 @@ function afficherUrgencesPage() {
 // VILLES
 // ═══════════════════════════════════════
 async function afficherVilles(filtre = '') {
-  const liste = filtre
-    ? toutesVilles.filter(v => v.nom.toLowerCase().includes(filtre.toLowerCase()))
-    : toutesVilles;
-
-  // Compter exactement depuis Supabase
+  // Charger les villes réelles depuis Supabase
   const { data } = await db.from('pharmacies').select('ville').eq('actif', true);
+  
   const compteur = {};
   (data || []).forEach(p => {
     const v = p.ville?.trim();
     if (v) compteur[v] = (compteur[v] || 0) + 1;
   });
 
+  // Construire liste dynamique
+  const villesDisponibles = Object.keys(compteur).sort();
+  
+  // Mettre à jour le select dans page toutes
+  const select = document.getElementById('select-ville');
+  if (select) {
+    select.innerHTML = villesDisponibles.map(v => {
+      const base = toutesVillesBase.find(b => b.nom === v);
+      const emoji = base ? base.emoji : emojiParDefaut;
+      return `<option value="${v}">${emoji} ${v}</option>`;
+    }).join('');
+  }
+
+  const liste = filtre
+    ? villesDisponibles.filter(v => v.toLowerCase().includes(filtre.toLowerCase()))
+    : villesDisponibles;
+
   return liste.map(v => {
-    const nb = compteur[v.nom] || 0;
+    const base = toutesVillesBase.find(b => b.nom === v);
+    const emoji = base ? base.emoji : emojiParDefaut;
+    const nb = compteur[v] || 0;
     return `
-      <div class="ville-item" onclick="choisirVille('${v.nom}')">
-        <span style="font-size:24px">${v.emoji}</span>
+      <div class="ville-item" onclick="choisirVille('${v}')">
+        <span style="font-size:24px">${emoji}</span>
         <div style="flex:1;">
-          <div class="ville-name">${v.nom}</div>
+          <div class="ville-name">${v}</div>
           <div class="ville-count">${nb} pharmacie${nb > 1 ? 's' : ''}</div>
         </div>
         <span style="color:#5A7A68;font-size:20px;">›</span>
       </div>`;
   }).join('');
 }
-
 async function filtrerVilles(valeur) {
   document.getElementById('liste-villes').innerHTML = await afficherVilles(valeur);
 }
