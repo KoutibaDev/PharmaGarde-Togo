@@ -11,12 +11,11 @@
 <body>
 
 <!-- PAGE ACCUEIL -->
-<div class="page" id="page-home">
-  <div class="install-banner" id="install-banner">
-    <span>📲</span>
-    <span class="install-strip-text">Installer l'app sur votre écran d'accueil</span>
-    <span onclick="document.getElementById('install-banner').style.display='none'" style="cursor:pointer;opacity:0.6;">✕</span>
-  </div>
+<div class="install-banner" id="install-banner" onclick="installerApp()" style="cursor:pointer;justify-content:center;">
+  <span>📲</span>
+  <span class="install-strip-text" style="flex:unset;">Installer l'app sur votre écran d'accueil</span>
+  <span onclick="event.stopPropagation();document.getElementById('install-banner').style.display='none'" style="cursor:pointer;opacity:0.6;margin-left:16px;">✕</span>
+</div>
 
   <div class="app-header">
     <div class="header-logo">Pharma<em>Garde</em></div>
