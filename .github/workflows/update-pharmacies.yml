@@ -17,7 +17,7 @@ jobs:
           node-version: '18'
 
       - name: Installer les dépendances
-        run: npm install node-fetch cheerio @supabase/supabase-js
+        run: npm install
 
       - name: Lancer le script
         env:
