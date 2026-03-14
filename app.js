@@ -564,23 +564,160 @@ function installerApp() {
 // ═══════════════════════════════════════
 // INITIALISATION
 // ═══════════════════════════════════════
-window.onload = async function () {
-  document.getElementById('urgences-home').innerHTML = afficherUrgencesHome();
-  document.getElementById('urgences-page').innerHTML = afficherUrgencesPage();
-  document.getElementById('liste-villes').innerHTML = await afficherVilles();
+// ═══════════════════════════════════════
+// PWA INSTALLATION
+// ═══════════════════════════════════════
+let deferredPrompt;
 
-  // GPS
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(function (pos) {
-      userLat = pos.coords.latitude;
-      userLng = pos.coords.longitude;
-      document.getElementById('loc-main').textContent = 'Lomé ✓';
-      document.getElementById('loc-sub').textContent = 'GPS actif · Appuyez pour changer';
-    }, function () {
-      document.getElementById('loc-main').textContent = 'Lomé';
-      document.getElementById('loc-sub').textContent = 'Appuyez pour changer de ville';
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-banner').style.display = 'flex';
+
+  // Popup automatique après 30 secondes
+  setTimeout(() => {
+    if (deferredPrompt) afficherPopupInstall();
+  }, 30000);
+});
+
+function afficherPopupInstall() {
+  // Créer popup si pas déjà affiché
+  if (document.getElementById('install-popup')) return;
+
+  const popup = document.createElement('div');
+  popup.id = 'install-popup';
+  popup.style.cssText = `
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 48px);
+    max-width: 440px;
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+    z-index: 999;
+    border: 2px solid var(--g2);
+    animation: slideUp 0.3s ease;
+  `;
+
+  popup.innerHTML = `
+    <style>
+      @keyframes slideUp {
+        from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+        to { opacity: 1; transform: translateX(-50%) translateY(0); }
+      }
+    </style>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
+      <div style="width:52px;height:52px;background:linear-gradient(135deg,#006B3C,#009A55);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">💊</div>
+      <div>
+        <div style="font-family:'Fraunces',serif;font-size:17px;font-weight:700;color:#0C1E14;">Installer PharmaGarde</div>
+        <div style="font-size:12px;color:#5A7A68;margin-top:2px;">Accès rapide depuis votre écran d'accueil</div>
+      </div>
+      <button onclick="document.getElementById('install-popup').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#5A7A68;margin-left:auto;">✕</button>
+    </div>
+    <div style="display:flex;gap:4px;margin-bottom:14px;">
+      <div style="flex:1;background:#F0FFF8;border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:20px;">⚡</div>
+        <div style="font-size:11px;font-weight:600;color:#006B3C;margin-top:4px;">Accès rapide</div>
+      </div>
+      <div style="flex:1;background:#F0FFF8;border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:20px;">📴</div>
+        <div style="font-size:11px;font-weight:600;color:#006B3C;margin-top:4px;">Hors ligne</div>
+      </div>
+      <div style="flex:1;background:#F0FFF8;border-radius:10px;padding:10px;text-align:center;">
+        <div style="font-size:20px;">🔔</div>
+        <div style="font-size:11px;font-weight:600;color:#006B3C;margin-top:4px;">Notifications</div>
+      </div>
+    </div>
+    <button onclick="installerDepuisPopup()" style="width:100%;background:linear-gradient(135deg,#006B3C,#009A55);color:white;border:none;border-radius:14px;padding:15px;font-family:'Outfit',sans-serif;font-size:15px;font-weight:800;cursor:pointer;">
+      📲 Installer maintenant — Gratuit
+    </button>
+  `;
+
+  document.body.appendChild(popup);
+}
+
+function installerDepuisPopup() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((result) => {
+      deferredPrompt = null;
+      const popup = document.getElementById('install-popup');
+      if (popup) popup.remove();
+      document.getElementById('install-banner').style.display = 'none';
+      if (result.outcome === 'accepted') {
+        // Message de remerciement
+        const msg = document.createElement('div');
+        msg.style.cssText = `
+          position:fixed;top:20px;left:50%;transform:translateX(-50%);
+          background:#006B3C;color:white;padding:12px 24px;border-radius:20px;
+          font-weight:700;z-index:9999;font-size:14px;
+          box-shadow:0 4px 20px rgba(0,107,60,0.4);
+        `;
+        msg.textContent = '✅ App installée avec succès !';
+        document.body.appendChild(msg);
+        setTimeout(() => msg.remove(), 3000);
+      }
     });
   }
+}
 
-  await rechargerPharmacies();
-};
+function installerApp() {
+  if (deferredPrompt) {
+    afficherPopupInstall();
+  } else {
+    // Instructions pour iPhone
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIOS) {
+      afficherInstructionsIOS();
+    } else {
+      alert('Pour installer : appuyez sur le menu de votre navigateur puis "Ajouter à l\'écran d\'accueil"');
+    }
+  }
+}
+
+function afficherInstructionsIOS() {
+  const popup = document.createElement('div');
+  popup.style.cssText = `
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: white; border-radius: 24px 24px 0 0;
+    padding: 24px; z-index: 9999;
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.2);
+  `;
+  popup.innerHTML = `
+    <div style="width:40px;height:4px;background:#D8EDE3;border-radius:2px;margin:0 auto 20px;"></div>
+    <div style="font-family:'Fraunces',serif;font-size:20px;font-weight:700;margin-bottom:6px;">Installer sur iPhone</div>
+    <div style="font-size:13px;color:#5A7A68;margin-bottom:20px;">Suivez ces étapes simples :</div>
+
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px;">
+      <div style="display:flex;align-items:center;gap:12px;background:#F2F7F4;border-radius:14px;padding:14px;">
+        <div style="width:36px;height:36px;background:#006B3C;border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:16px;flex-shrink:0;">1</div>
+        <div>
+          <div style="font-weight:700;font-size:14px;">Appuyez sur le bouton Partager</div>
+          <div style="font-size:12px;color:#5A7A68;">L'icône 📤 en bas de Safari</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;background:#F2F7F4;border-radius:14px;padding:14px;">
+        <div style="width:36px;height:36px;background:#006B3C;border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:16px;flex-shrink:0;">2</div>
+        <div>
+          <div style="font-weight:700;font-size:14px;">Sur l'écran d'accueil</div>
+          <div style="font-size:12px;color:#5A7A68;">Faites défiler et appuyez sur "Sur l'écran d'accueil"</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;background:#F2F7F4;border-radius:14px;padding:14px;">
+        <div style="width:36px;height:36px;background:#006B3C;border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:16px;flex-shrink:0;">3</div>
+        <div>
+          <div style="font-weight:700;font-size:14px;">Appuyez sur "Ajouter"</div>
+          <div style="font-size:12px;color:#5A7A68;">L'app apparaîtra sur votre écran d'accueil</div>
+        </div>
+      </div>
+    </div>
+
+    <button onclick="this.parentElement.remove()" style="width:100%;background:#006B3C;color:white;border:none;border-radius:14px;padding:15px;font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;cursor:pointer;">
+      J'ai compris ✓
+    </button>
+  `;
+  document.body.appendChild(popup);
+}
