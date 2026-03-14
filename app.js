@@ -6,7 +6,33 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ═══════════════════════════════════════
-// NUMÉROS D'URGENCE
+// ÉTAT GLOBAL
+// ═══════════════════════════════════════
+let villeActive = 'Lomé';
+let ongletActif = 'soir';
+let toutesPharmacies = [];
+let zoneActive = 'tous';
+let villeToutes = 'Lomé';
+let carteLeaflet = null;
+let userLat = null;
+let userLng = null;
+let deferredPrompt;
+
+// ═══════════════════════════════════════
+// COORDONNÉES DES VILLES
+// ═══════════════════════════════════════
+const coordsVilles = {
+  'Lomé': { lat: 6.1375, lng: 1.2123 },
+  'Kara': { lat: 9.5511, lng: 1.1864 },
+  'Kpalimé': { lat: 6.9006, lng: 0.6241 },
+  'Sokodé': { lat: 8.9833, lng: 1.1333 },
+  'Dapaong': { lat: 10.8667, lng: 0.2167 },
+  'Tsévié': { lat: 6.4264, lng: 1.2136 },
+  'Atakpamé': { lat: 7.5333, lng: 1.1333 }
+};
+
+// ═══════════════════════════════════════
+// URGENCES
 // ═══════════════════════════════════════
 const urgences = [
   { nom: "SAMU", numero: "15", numeroAffiche: "15", emoji: "🚑", couleur: "r" },
@@ -16,7 +42,7 @@ const urgences = [
 ];
 
 // ═══════════════════════════════════════
-// VILLES DU TOGO
+// VILLES
 // ═══════════════════════════════════════
 const toutesVilles = [
   { nom: "Lomé", emoji: "🏙️" },
@@ -29,13 +55,7 @@ const toutesVilles = [
 ];
 
 // ═══════════════════════════════════════
-// ÉTAT
-// ═══════════════════════════════════════
-let villeActive = 'Lomé';
-let ongletActif = 'soir';
-
-// ═══════════════════════════════════════
-// CHARGER LES PHARMACIES
+// CHARGER PHARMACIES
 // ═══════════════════════════════════════
 async function chargerPharmacies(ville) {
   try {
@@ -45,45 +65,239 @@ async function chargerPharmacies(ville) {
     if (error) throw error;
     return data || [];
   } catch (e) {
-    console.error('Erreur Supabase:', e);
+    console.error('Erreur:', e);
     return [];
   }
 }
 
 // ═══════════════════════════════════════
-// AFFICHER UNE PHARMACIE
+// DISTANCE GPS
 // ═══════════════════════════════════════
-function afficherPharmacie(p) {
+function calculerDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLng/2) * Math.sin(dLng/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// ═══════════════════════════════════════
+// POPUP PHARMACIE
+// ═══════════════════════════════════════
+function ouvrirPopup(p) {
   const assurances = (p.assurances || '').split(',').filter(a => a.trim());
-  const heuresHtml = p.heures && p.heures !== '24h/24'
-    ? `<div class="meta-row"><span>🕐</span> ${p.heures}</div>` : '';
+  const assurancesHtml = assurances.length
+    ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">${assurances.map(a => `<span class="assur-tag">${a.trim()}</span>`).join('')}</div>`
+    : '<span style="color:#5A7A68;font-size:12px;">Aucune assurance précisée</span>';
+
+  const telPropre = (p.tel || '').replace(/\s/g, '');
+  const chipClass = p.garde === '24h/24' ? 'h24' : 'soir';
+  const chipLabel = p.garde === '24h/24' ? '🌛 24h/24' : '🌆 Ce soir';
+
+  document.getElementById('popup-content').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+      <div>
+        <div style="font-family:'Fraunces',serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px;">${p.nom}</div>
+        <div class="garde-chip ${chipClass}">${chipLabel}</div>
+      </div>
+      <button onclick="fermerPopup()" style="background:var(--bg);border:none;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;">✕</button>
+    </div>
+
+    <div style="background:var(--bg);border-radius:14px;padding:14px;margin-bottom:16px;">
+      <div class="meta-row" style="margin-bottom:8px;font-size:14px;"><span>📍</span> <span style="color:var(--text)">${p.adresse || 'Non précisée'}</span></div>
+      <div class="meta-row" style="margin-bottom:8px;font-size:14px;"><span>🏙️</span> <span style="color:var(--text)">${p.ville} — Zone ${p.zone}</span></div>
+      <div class="meta-row" style="font-size:14px;"><span>📞</span> <span style="color:var(--text);font-weight:600;">${p.tel_affiche || p.tel || 'Non précisé'}</span></div>
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--sub);margin-bottom:8px;">Assurances acceptées</div>
+      ${assurancesHtml}
+    </div>
+
+    <div style="display:flex;gap:10px;">
+      ${telPropre ? `
+        <a href="tel:${telPropre}" style="flex:1;background:var(--g1);color:white;border:none;border-radius:14px;padding:14px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;">
+          📞 Appeler
+        </a>
+        <a href="https://wa.me/${telPropre.replace('+','')}" target="_blank" style="background:#25D366;color:white;border:none;border-radius:14px;padding:14px 18px;font-size:18px;text-decoration:none;display:flex;align-items:center;justify-content:center;">
+          💬
+        </a>
+      ` : ''}
+      <a href="https://maps.google.com/?q=${encodeURIComponent((p.nom||'')+' '+(p.adresse||'')+' Togo')}" target="_blank" style="background:var(--bg);border:1.5px solid var(--border);border-radius:14px;padding:14px 18px;font-size:18px;text-decoration:none;display:flex;align-items:center;justify-content:center;">
+        🗺️
+      </a>
+    </div>
+  `;
+
+  document.getElementById('popup-overlay').style.display = 'block';
+  document.getElementById('popup-pharmacie').style.display = 'block';
+}
+
+function fermerPopup() {
+  document.getElementById('popup-overlay').style.display = 'none';
+  document.getElementById('popup-pharmacie').style.display = 'none';
+}
+
+// ═══════════════════════════════════════
+// AFFICHER UNE PHARMACIE (carte)
+// ═══════════════════════════════════════
+function afficherPharmacie(p, estLaPlusProche = false) {
+  const assurances = (p.assurances || '').split(',').filter(a => a.trim());
   const chipClass = p.garde === '24h/24' ? 'h24' : 'soir';
   const chipLabel = p.garde === '24h/24' ? '🌛 24h/24' : '🌆 Ce soir';
   const assurancesHtml = assurances.map(a => `<span class="assur-tag">${a.trim()}</span>`).join('');
   const telPropre = (p.tel || '').replace(/\s/g, '');
+  const badgeProche = estLaPlusProche ? '<span style="background:#FFD100;color:#1a1a1a;border-radius:8px;padding:3px 8px;font-size:10px;font-weight:700;margin-left:6px;">📍 La plus proche</span>' : '';
 
   return `
-    <div class="pharm-card ${p.garde === '24h/24' ? 'h24' : ''}">
+    <div class="pharm-card ${p.garde === '24h/24' ? 'h24' : ''}" onclick="ouvrirPopup(${JSON.stringify(p).replace(/"/g, '&quot;')})" style="cursor:pointer;">
       <div class="card-head">
-        <div class="pharm-name">${p.nom}</div>
+        <div class="pharm-name">${p.nom}${badgeProche}</div>
         <div class="garde-chip ${chipClass}">${chipLabel}</div>
       </div>
       <div class="card-meta">
         <div class="meta-row"><span>📍</span> ${p.adresse || ''}</div>
-        <div class="meta-row"><span>📞</span> ${p.tel_affiche || p.tel || ''}</div>
-        ${heuresHtml}
+        <div class="meta-row"><span>📞</span> ${p.tel_affiche || p.tel || 'Non précisé'}</div>
         ${assurancesHtml ? `<div class="assurance-row">${assurancesHtml}</div>` : ''}
       </div>
       <div class="card-actions">
-        ${telPropre ? `<a href="tel:${telPropre}" class="btn-call">📞 Appeler maintenant</a>` : '<div class="btn-call" style="background:#ccc;cursor:not-allowed;">📞 Numéro non précisé</div>'}
-        ${telPropre ? `<a href="https://wa.me/${telPropre.replace('+','')}" target="_blank" class="btn-icon">💬</a>` : ''}
-        <a href="https://maps.google.com/?q=${encodeURIComponent((p.nom||'')+' '+(p.adresse||'')+' Togo')}" target="_blank" class="btn-icon">🗺️</a>
+        ${telPropre ? `<a href="tel:${telPropre}" class="btn-call" onclick="event.stopPropagation()">📞 Appeler</a>` : '<div class="btn-call" style="background:#ccc;cursor:not-allowed;">Non précisé</div>'}
+        ${telPropre ? `<a href="https://wa.me/${telPropre.replace('+','')}" target="_blank" class="btn-icon" onclick="event.stopPropagation()">💬</a>` : ''}
+        <a href="https://maps.google.com/?q=${encodeURIComponent((p.nom||'')+' Togo')}" target="_blank" class="btn-icon" onclick="event.stopPropagation()">🗺️</a>
       </div>
     </div>`;
 }
 
 // ═══════════════════════════════════════
-// AFFICHER URGENCES HOME
+// PHARMACIE LA PLUS PROCHE
+// ═══════════════════════════════════════
+function afficherPlusProche(pharmacies) {
+  if (!userLat || !userLng || pharmacies.length === 0) return;
+
+  const coords = coordsVilles[villeActive];
+  if (!coords) return;
+
+  // On prend la première pharmacie 24h/24 ou la première de la liste
+  const h24 = pharmacies.find(p => p.garde === '24h/24');
+  const plusProche = h24 || pharmacies[0];
+
+  document.getElementById('plus-proche-section').style.display = 'block';
+  document.getElementById('plus-proche-card').innerHTML = afficherPharmacie(plusProche, true);
+}
+
+// ═══════════════════════════════════════
+// RECHARGER PHARMACIES (page accueil)
+// ═══════════════════════════════════════
+async function rechargerPharmacies() {
+  document.getElementById('liste-pharmacies').innerHTML =
+    `<div style="text-align:center;padding:32px;color:#5A7A68;"><div style="font-size:28px;margin-bottom:8px;">⏳</div>Chargement...</div>`;
+
+  const data = await chargerPharmacies(villeActive);
+
+  if (!data || data.length === 0) {
+    document.getElementById('liste-pharmacies').innerHTML =
+      `<div style="text-align:center;padding:40px;color:#5A7A68;"><div style="font-size:40px;margin-bottom:10px;">🔍</div><div style="font-weight:700;">Aucune pharmacie trouvée</div><div style="font-size:13px;margin-top:4px;">pour ${villeActive}</div></div>`;
+    document.getElementById('count-badge').textContent = '0 trouvée';
+    return;
+  }
+
+  // Afficher seulement 3 en aperçu
+  const apercu = data.slice(0, 3);
+  document.getElementById('liste-pharmacies').innerHTML = apercu.map(p => afficherPharmacie(p)).join('');
+  document.getElementById('count-badge').textContent = data.length + ' trouvée' + (data.length > 1 ? 's' : '');
+
+  // Afficher la plus proche
+  afficherPlusProche(data);
+}
+
+// ═══════════════════════════════════════
+// PAGE TOUTES LES PHARMACIES
+// ═══════════════════════════════════════
+async function chargerToutesPharmacies() {
+  document.getElementById('liste-toutes').innerHTML =
+    `<div style="text-align:center;padding:32px;color:#5A7A68;"><div style="font-size:28px;margin-bottom:8px;">⏳</div>Chargement...</div>`;
+
+  toutesPharmacies = await chargerPharmacies(villeToutes);
+  afficherListeToutes();
+  initialiserCarte();
+}
+
+function afficherListeToutes() {
+  let liste = toutesPharmacies;
+  if (zoneActive !== 'tous') {
+    liste = toutesPharmacies.filter(p => p.zone === zoneActive);
+  }
+
+  document.getElementById('count-toutes').textContent = liste.length + ' trouvée' + (liste.length > 1 ? 's' : '');
+
+  if (liste.length === 0) {
+    document.getElementById('liste-toutes').innerHTML =
+      `<div style="text-align:center;padding:40px;color:#5A7A68;"><div style="font-size:40px;margin-bottom:10px;">🔍</div><div style="font-weight:700;">Aucune pharmacie pour cette zone</div></div>`;
+    return;
+  }
+
+  document.getElementById('liste-toutes').innerHTML = liste.map(p => afficherPharmacie(p)).join('');
+}
+
+function filtrerZone(zone) {
+  zoneActive = zone;
+  document.querySelectorAll('.zone-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById('zone-' + zone).classList.add('on');
+  afficherListeToutes();
+}
+
+async function changerVilleToutes(ville) {
+  villeToutes = ville;
+  zoneActive = 'tous';
+  document.querySelectorAll('.zone-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById('zone-tous').classList.add('on');
+
+  // Afficher/cacher les zones selon la ville
+  const zonesWrap = document.getElementById('zones-wrap');
+  const carteContainer = document.getElementById('carte-container');
+  if (ville === 'Lomé') {
+    zonesWrap.style.display = 'flex';
+    carteContainer.style.display = 'block';
+  } else {
+    zonesWrap.style.display = 'none';
+    carteContainer.style.display = 'none';
+  }
+
+  await chargerToutesPharmacies();
+}
+
+// ═══════════════════════════════════════
+// CARTE LEAFLET
+// ═══════════════════════════════════════
+function initialiserCarte() {
+  const coords = coordsVilles[villeToutes] || coordsVilles['Lomé'];
+
+  if (carteLeaflet) {
+    carteLeaflet.remove();
+    carteLeaflet = null;
+  }
+
+  setTimeout(() => {
+    carteLeaflet = L.map('carte-lome').setView([coords.lat, coords.lng], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(carteLeaflet);
+
+    // Ajouter marqueurs pharmacies
+    toutesPharmacies.forEach(p => {
+      const offsetLat = (Math.random() - 0.5) * 0.05;
+      const offsetLng = (Math.random() - 0.5) * 0.05;
+      L.marker([coords.lat + offsetLat, coords.lng + offsetLng])
+        .addTo(carteLeaflet)
+        .bindPopup(`<b>${p.nom}</b><br>${p.adresse || ''}<br>📞 ${p.tel_affiche || p.tel || ''}`);
+    });
+  }, 100);
+}
+
+// ═══════════════════════════════════════
+// AFFICHER URGENCES
 // ═══════════════════════════════════════
 function afficherUrgencesHome() {
   return urgences.map(u => `
@@ -94,9 +308,6 @@ function afficherUrgencesHome() {
     </a>`).join('');
 }
 
-// ═══════════════════════════════════════
-// AFFICHER URGENCES PAGE
-// ═══════════════════════════════════════
 function afficherUrgencesPage() {
   const bg = { r:'#FFF0EE', b:'#EEF4FF', o:'#FFF8EE', g:'#F0FFF8' };
   const tc = { r:'#FF3B30', b:'#0A84FF', o:'#FF9500', g:'#006B3C' };
@@ -112,19 +323,16 @@ function afficherUrgencesPage() {
 }
 
 // ═══════════════════════════════════════
-// AFFICHER VILLES AVEC VRAI NOMBRE
+// VILLES
 // ═══════════════════════════════════════
 async function afficherVilles(filtre = '') {
   const liste = filtre
     ? toutesVilles.filter(v => v.nom.toLowerCase().includes(filtre.toLowerCase()))
     : toutesVilles;
 
-  // Compter les pharmacies par ville depuis Supabase
   const { data } = await db.from('pharmacies').select('ville').eq('actif', true);
   const compteur = {};
-  (data || []).forEach(p => {
-    compteur[p.ville] = (compteur[p.ville] || 0) + 1;
-  });
+  (data || []).forEach(p => { compteur[p.ville] = (compteur[p.ville] || 0) + 1; });
 
   return liste.map(v => {
     const nb = compteur[v.nom] || 0;
@@ -140,50 +348,16 @@ async function afficherVilles(filtre = '') {
   }).join('');
 }
 
-// ═══════════════════════════════════════
-// FILTRER VILLES
-// ═══════════════════════════════════════
 async function filtrerVilles(valeur) {
   document.getElementById('liste-villes').innerHTML = await afficherVilles(valeur);
 }
 
-// ═══════════════════════════════════════
-// CHOISIR UNE VILLE
-// ═══════════════════════════════════════
 async function choisirVille(ville) {
   villeActive = ville;
   document.getElementById('loc-main').textContent = ville + ' ✓';
   document.getElementById('loc-sub').textContent = 'Appuyez pour changer de ville';
   afficherPage('page-home');
   await rechargerPharmacies();
-}
-
-// ═══════════════════════════════════════
-// RECHARGER PHARMACIES
-// ═══════════════════════════════════════
-async function rechargerPharmacies() {
-  document.getElementById('liste-pharmacies').innerHTML =
-    `<div style="text-align:center;padding:48px 20px;color:#5A7A68;">
-      <div style="font-size:32px;margin-bottom:12px;">⏳</div>
-      Chargement en cours...
-    </div>`;
-
-  const data = await chargerPharmacies(villeActive);
-
-  if (!data || data.length === 0) {
-    document.getElementById('liste-pharmacies').innerHTML =
-      `<div style="text-align:center;padding:48px 20px;color:#5A7A68;">
-        <div style="font-size:48px;margin-bottom:12px;">🔍</div>
-        <div style="font-weight:700;margin-bottom:6px;">Aucune pharmacie trouvée</div>
-        <div style="font-size:13px;">pour ${villeActive}</div>
-      </div>`;
-    document.getElementById('count-badge').textContent = '0 trouvée';
-    return;
-  }
-
-  document.getElementById('liste-pharmacies').innerHTML = data.map(afficherPharmacie).join('');
-  document.getElementById('count-badge').textContent =
-    data.length + ' trouvée' + (data.length > 1 ? 's' : '');
 }
 
 // ═══════════════════════════════════════
@@ -206,6 +380,13 @@ function afficherPage(pageId) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('on'));
   const map = { 'page-home': 'nav-home', 'page-urgences': 'nav-urgences', 'page-contact': 'nav-contact' };
   if (map[pageId]) document.getElementById(map[pageId]).classList.add('on');
+
+  // Charger les données de la page toutes
+  if (pageId === 'page-toutes') {
+    villeToutes = villeActive;
+    document.getElementById('select-ville').value = villeActive;
+    chargerToutesPharmacies();
+  }
 }
 
 // ═══════════════════════════════════════
@@ -221,9 +402,8 @@ function envoyerWhatsApp() {
 }
 
 // ═══════════════════════════════════════
-// PWA INSTALLATION
+// PWA
 // ═══════════════════════════════════════
-let deferredPrompt;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
@@ -246,19 +426,15 @@ function installerApp() {
 // INITIALISATION
 // ═══════════════════════════════════════
 window.onload = async function () {
-  // Urgences
   document.getElementById('urgences-home').innerHTML = afficherUrgencesHome();
   document.getElementById('urgences-page').innerHTML = afficherUrgencesPage();
-
-  // Villes avec vrais nombres
   document.getElementById('liste-villes').innerHTML = await afficherVilles();
-
-  // Pharmacies
-  await rechargerPharmacies();
 
   // GPS
   if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(function () {
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      userLat = pos.coords.latitude;
+      userLng = pos.coords.longitude;
       document.getElementById('loc-main').textContent = 'Lomé ✓';
       document.getElementById('loc-sub').textContent = 'GPS actif · Appuyez pour changer';
     }, function () {
@@ -266,4 +442,6 @@ window.onload = async function () {
       document.getElementById('loc-sub').textContent = 'Appuyez pour changer de ville';
     });
   }
+
+  await rechargerPharmacies();
 };
