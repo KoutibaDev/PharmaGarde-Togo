@@ -1,4 +1,4 @@
-const fetch = require('node-fetch');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const cheerio = require('cheerio');
 const { createClient } = require('@supabase/supabase-js');
 
@@ -7,32 +7,27 @@ const supabase = createClient(
   process.env.SUPABASE_KEY
 );
 
-async function scrapePharmacies() {
-  console.log('🔍 Lecture de lacinquieme.tg...');
+async function main() {
+  console.log('Lecture de lacinquieme.tg...');
   try {
-    const response = await fetch('https://www.lacinquieme.tg', {
+    const res = await fetch('https://www.lacinquieme.tg', {
       headers: { 'User-Agent': 'Mozilla/5.0' }
     });
-    const html = await response.text();
+    const html = await res.text();
     const $ = cheerio.load(html);
     const pharmacies = [];
 
-    $('table tr, .pharmacie, article').each((i, el) => {
-      const texte = $(el).text().trim();
-      if (!texte || texte.length < 10) return;
-
-      const lignes = texte.split('\n').map(l => l.trim()).filter(l => l);
-      const nom = lignes[0] || '';
-      const adresse = lignes[1] || '';
-      const tel = $(el).find('a[href^="tel:"]').attr('href')?.replace('tel:', '')
-        || texte.match(/\+?228\s?[\d\s]{8,}/)?.[0]?.replace(/\s/g, '') || '';
+    $('[class*="pharm"], [class*="garde"], article, .entry-content p').each((i, el) => {
+      const nom = $(el).find('strong, h2, h3').first().text().trim();
+      const tel = $(el).find('a[href^="tel:"]').attr('href')?.replace('tel:', '') || '';
+      const adresse = $(el).text().replace(nom, '').trim().substring(0, 200);
 
       if (nom && nom.toLowerCase().includes('pharmac')) {
         pharmacies.push({
           nom: nom.substring(0, 100),
-          adresse: adresse.substring(0, 200),
-          tel: tel.substring(0, 20),
-          tel_affiche: tel.substring(0, 20),
+          adresse,
+          tel,
+          tel_affiche: tel,
           ville: 'Lomé',
           zone: 'A',
           garde: 'soir',
@@ -43,30 +38,19 @@ async function scrapePharmacies() {
       }
     });
 
-    console.log(`✅ ${pharmacies.length} pharmacies trouvées`);
-    return pharmacies;
-  } catch (e) {
-    console.error('❌ Erreur:', e.message);
-    return [];
-  }
-}
+    console.log(pharmacies.length + ' pharmacies trouvées');
 
-async function mettreAJour(pharmacies) {
-  if (pharmacies.length === 0) {
-    console.log('⚠️ Aucune pharmacie — données existantes conservées');
-    return;
+    if (pharmacies.length > 0) {
+      await supabase.from('pharmacies').delete().neq('id', 0);
+      const { error } = await supabase.from('pharmacies').insert(pharmacies);
+      if (error) console.error('Erreur:', error);
+      else console.log('Mise à jour réussie !');
+    } else {
+      console.log('Aucune pharmacie trouvée - données conservées');
+    }
+  } catch(e) {
+    console.error('Erreur:', e.message);
   }
-  console.log('🗑️ Suppression anciennes données...');
-  await supabase.from('pharmacies').delete().neq('id', 0);
-  console.log('💾 Insertion nouvelles données...');
-  const { error } = await supabase.from('pharmacies').insert(pharmacies);
-  if (error) console.error('❌ Erreur insertion:', error);
-  else console.log(`✅ ${pharmacies.length} pharmacies mises à jour !`);
-}
-
-async function main() {
-  const pharmacies = await scrapePharmacies();
-  await mettreAJour(pharmacies);
 }
 
 main();
