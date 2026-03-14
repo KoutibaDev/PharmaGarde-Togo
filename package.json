@@ -1,13 +1,9 @@
 {
   "name": "pharmagarde-togo",
   "version": "1.0.0",
-  "description": "Pharmacies de garde au Togo",
   "type": "commonjs",
-  "scripts": {
-    "update": "node scripts/update-pharmacies.js"
-  },
   "dependencies": {
-    "node-fetch": "2.6.9",
+    "node-fetch": "3.3.2",
     "cheerio": "1.0.0-rc.12",
     "@supabase/supabase-js": "2.39.0"
   }
