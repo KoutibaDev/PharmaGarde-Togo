@@ -1,40 +1,72 @@
 // ═══════════════════════════════════════
-// DONNÉES DES PHARMACIES (semaine en cours)
+// DONNÉES DES PHARMACIES
 // ═══════════════════════════════════════
-const pharmacies = [
-  {
-    nom: "Pharmacie BETHEL",
-    adresse: "Adidogomé",
-    ville: "Lomé",
-    zone: "C",
-    tel: "+22822252370",
-    telAffiche: "+228 22 25 23 70",
-    garde: "24h/24",
-    assurances: ["INAM", "CNSS", "GTA"]
-  },
-  {
-    nom: "Pharmacie GREENRX",
-    adresse: "Ségbé",
-    ville: "Lomé",
-    zone: "C",
-    tel: "+22892961919",
-    telAffiche: "+228 92 96 19 19",
-    garde: "soir",
-    heures: "Jusqu'à 22h00",
-    assurances: ["INAM"]
-  },
-  {
-    nom: "Pharmacie du PEUPLE",
-    adresse: "Bvd du 13 Janvier",
-    ville: "Lomé",
-    zone: "B",
-    tel: "+22822214410",
-    telAffiche: "+228 22 21 44 10",
-    garde: "soir",
-    heures: "Jusqu'à 23h00",
-    assurances: ["CNSS", "GTA"]
-  }
-];
+const pharmacies = {
+  soir: [
+    {
+      nom: "Pharmacie BETHEL",
+      adresse: "Adidogomé",
+      ville: "Lomé",
+      tel: "+22822252370",
+      telAffiche: "+228 22 25 23 70",
+      garde: "24h/24",
+      assurances: ["INAM", "CNSS", "GTA"]
+    },
+    {
+      nom: "Pharmacie GREENRX",
+      adresse: "Ségbé",
+      ville: "Lomé",
+      tel: "+22892961919",
+      telAffiche: "+228 92 96 19 19",
+      garde: "soir",
+      heures: "Jusqu'à 22h00",
+      assurances: ["INAM"]
+    },
+    {
+      nom: "Pharmacie du PEUPLE",
+      adresse: "Bvd du 13 Janvier",
+      ville: "Lomé",
+      tel: "+22822214410",
+      telAffiche: "+228 22 21 44 10",
+      garde: "soir",
+      heures: "Jusqu'à 23h00",
+      assurances: ["CNSS", "GTA"]
+    }
+  ],
+  nuit: [
+    {
+      nom: "Pharmacie BETHEL",
+      adresse: "Adidogomé",
+      ville: "Lomé",
+      tel: "+22822252370",
+      telAffiche: "+228 22 25 23 70",
+      garde: "24h/24",
+      assurances: ["INAM", "CNSS", "GTA"]
+    }
+  ],
+  demain: [
+    {
+      nom: "Pharmacie ESPOIR",
+      adresse: "Quartier Tokoin",
+      ville: "Lomé",
+      tel: "+22822213456",
+      telAffiche: "+228 22 21 34 56",
+      garde: "soir",
+      heures: "Jusqu'à 22h00",
+      assurances: ["INAM"]
+    },
+    {
+      nom: "Pharmacie SAINTE MARIE",
+      adresse: "Quartier Agbalépédogan",
+      ville: "Lomé",
+      tel: "+22822219876",
+      telAffiche: "+228 22 21 98 76",
+      garde: "soir",
+      heures: "Jusqu'à 23h00",
+      assurances: ["CNSS", "INAM"]
+    }
+  ]
+};
 
 // ═══════════════════════════════════════
 // NUMÉROS D'URGENCE
@@ -43,7 +75,7 @@ const urgences = [
   { nom: "SAMU", numero: "15", emoji: "🚑", couleur: "r" },
   { nom: "Police", numero: "117", emoji: "👮", couleur: "b" },
   { nom: "Pompiers", numero: "118", emoji: "🚒", couleur: "o" },
-  { nom: "CHU Sylvanus", numero: "+228 22 21 25 01", emoji: "🏥", couleur: "g" }
+  { nom: "CHU Sylvanus", numero: "+22822212501", numeroAffiche: "+228 22 21 25 01", emoji: "🏥", couleur: "g" }
 ];
 
 // ═══════════════════════════════════════
@@ -60,6 +92,26 @@ const villes = [
 ];
 
 // ═══════════════════════════════════════
+// ONGLET ACTIF
+// ═══════════════════════════════════════
+let ongletActif = 'soir';
+
+function changerOnglet(onglet) {
+  ongletActif = onglet;
+
+  // Mettre à jour les tabs visuellement
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.getElementById('tab-' + onglet).classList.add('on');
+
+  // Recharger les pharmacies
+  const liste = pharmacies[onglet];
+  document.getElementById('liste-pharmacies').innerHTML =
+    liste.map(afficherPharmacie).join('');
+  document.getElementById('count-badge').textContent =
+    liste.length + ' trouvée' + (liste.length > 1 ? 's' : '');
+}
+
+// ═══════════════════════════════════════
 // NAVIGATION
 // ═══════════════════════════════════════
 function afficherPage(pageId) {
@@ -69,18 +121,20 @@ function afficherPage(pageId) {
   document.getElementById(pageId).style.display = 'block';
   window.scrollTo(0, 0);
 
-  // Mettre à jour la nav
-  document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.classList.remove('on');
-  });
-
-  if (pageId === 'page-home') document.getElementById('nav-home').classList.add('on');
-  if (pageId === 'page-urgences') document.getElementById('nav-urgences').classList.add('on');
-  if (pageId === 'page-contact') document.getElementById('nav-contact').classList.add('on');
+  document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('on'));
+  if (pageId === 'page-home') {
+    document.getElementById('nav-home').classList.add('on');
+  }
+  if (pageId === 'page-urgences') {
+    document.getElementById('nav-urgences').classList.add('on');
+  }
+  if (pageId === 'page-contact') {
+    document.getElementById('nav-contact').classList.add('on');
+  }
 }
 
 // ═══════════════════════════════════════
-// AFFICHER LES PHARMACIES
+// AFFICHER UNE PHARMACIE
 // ═══════════════════════════════════════
 function afficherPharmacie(p) {
   const assurancesHtml = p.assurances
@@ -107,9 +161,9 @@ function afficherPharmacie(p) {
       </div>
       <div class="card-actions">
         <a href="tel:${p.tel}" class="btn-call">📞 Appeler maintenant</a>
-        <a href="https://wa.me/${p.tel}" target="_blank" class="btn-icon">💬</a>
-        <a href="https://maps.google.com/?q=${encodeURIComponent(p.nom + ' ' + p.adresse + ' Togo')}" 
-           target="_blank" class="btn-icon">🗺️</a>
+        <a href="https://wa.me/${p.tel}" target="_blank" class="btn-icon" title="WhatsApp">💬</a>
+        <a href="https://maps.google.com/?q=${encodeURIComponent(p.nom + ' ' + p.adresse + ' Togo')}"
+           target="_blank" class="btn-icon" title="Carte">🗺️</a>
       </div>
     </div>
   `;
@@ -123,7 +177,7 @@ function afficherUrgences() {
     <a href="tel:${u.numero}" class="urg-card ${u.couleur}" style="text-decoration:none;">
       <div class="urg-emoji">${u.emoji}</div>
       <div class="urg-name">${u.nom}</div>
-      <div class="urg-num">${u.numero}</div>
+      <div class="urg-num">${u.numeroAffiche || u.numero}</div>
     </a>
   `).join('');
 }
@@ -161,17 +215,40 @@ function envoyerWhatsApp() {
 }
 
 // ═══════════════════════════════════════
+// INSTALLATION PWA
+// ═══════════════════════════════════════
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-banner').style.display = 'flex';
+});
+
+function installerApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => {
+      deferredPrompt = null;
+      document.getElementById('install-banner').style.display = 'none';
+    });
+  } else {
+    alert('Pour installer : appuyez sur le menu de votre navigateur puis "Ajouter à l\'écran d\'accueil"');
+  }
+}
+
+// ═══════════════════════════════════════
 // INITIALISATION
 // ═══════════════════════════════════════
 window.onload = function () {
-  // Remplir les pharmacies
+  // Pharmacies
   document.getElementById('liste-pharmacies').innerHTML =
-    pharmacies.map(afficherPharmacie).join('');
+    pharmacies.soir.map(afficherPharmacie).join('');
 
-  // Remplir les urgences (page home)
+  // Urgences page home
   document.getElementById('urgences-home').innerHTML = afficherUrgences();
 
-  // Remplir les urgences (page urgences complète)
+  // Urgences page complète
   document.getElementById('urgences-page').innerHTML = urgences.map(u => `
     <a href="tel:${u.numero}" class="urg-full" style="text-decoration:none;">
       <div class="urg-full-icon" style="background:${
@@ -183,19 +260,16 @@ window.onload = function () {
       </div>
       <div class="urg-full-num" style="color:${
         u.couleur==='r'?'#FF3B30':u.couleur==='b'?'#0A84FF':u.couleur==='o'?'#FF9500':'#006B3C'
-      };">${u.numero}</div>
+      };">${u.numeroAffiche || u.numero}</div>
     </a>
   `).join('');
 
-  // Remplir les villes
+  // Villes
   document.getElementById('liste-villes').innerHTML = afficherVilles();
 
-  // Afficher la page d'accueil
-  afficherPage('page-home');
-
-  // GPS automatique
+  // GPS
   if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(function (pos) {
+    navigator.geolocation.getCurrentPosition(function () {
       document.getElementById('loc-main').textContent = 'Lomé — Position détectée';
       document.getElementById('loc-sub').textContent = 'GPS actif · Appuyez pour changer';
     });
