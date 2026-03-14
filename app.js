@@ -432,9 +432,15 @@ async function afficherVilles(filtre = '') {
   const liste = filtre
     ? toutesVilles.filter(v => v.nom.toLowerCase().includes(filtre.toLowerCase()))
     : toutesVilles;
+
+  // Compter exactement depuis Supabase
   const { data } = await db.from('pharmacies').select('ville').eq('actif', true);
   const compteur = {};
-  (data || []).forEach(p => { compteur[p.ville] = (compteur[p.ville] || 0) + 1; });
+  (data || []).forEach(p => {
+    const v = p.ville?.trim();
+    if (v) compteur[v] = (compteur[v] || 0) + 1;
+  });
+
   return liste.map(v => {
     const nb = compteur[v.nom] || 0;
     return `
