@@ -8,25 +8,57 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: .
     steps:
-      - uses: actions/checkout@v3
-
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
 
       - name: Installer les dépendances
-        run: npm install
-
-      - name: Vérifier les fichiers
-        run: ls -la scripts/
+        run: npm install node-fetch@2 cheerio @supabase/supabase-js
 
       - name: Lancer le script
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-        run: node scripts/update-pharmacies.js
+        run: |
+          node -e "
+          const fetch = require('node-fetch');
+          const cheerio = require('cheerio');
+          const { createClient } = require('@supabase/supabase-js');
+          const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+          
+          async function main() {
+            console.log('Lecture de lacinquieme.tg...');
+            try {
+              const res = await fetch('https://www.lacinquieme.tg', { headers: { 'User-Agent': 'Mozilla/5.0' } });
+              const html = await res.text();
+              const $ = cheerio.load(html);
+              const pharmacies = [];
+              
+              $('table tr, .pharmacie, article, p').each((i, el) => {
+                const texte = \$(el).text().trim();
+                const nom = \$(el).find('h2,h3,strong').first().text().trim();
+                const tel = \$(el).find('a[href^=\"tel:\"]').attr('href')?.replace('tel:','') || '';
+                const adresse = \$(el).find('p,address').first().text().trim();
+                if (nom && nom.toLowerCase().includes('pharmac')) {
+                  pharmacies.push({ nom, adresse, tel, tel_affiche: tel, ville: 'Lomé', zone: 'A', garde: 'soir', heures: 'Toute la semaine', assurances: '', actif: true });
+                }
+              });
+              
+              console.log(pharmacies.length + ' pharmacies trouvées');
+              
+              if (pharmacies.length > 0) {
+                await supabase.from('pharmacies').delete().neq('id', 0);
+                const { error } = await supabase.from('pharmacies').insert(pharmacies);
+                if (error) console.error('Erreur:', error);
+                else console.log('Mise à jour réussie !');
+              } else {
+                console.log('Aucune pharmacie trouvée - données conservées');
+              }
+            } catch(e) {
+              console.error('Erreur:', e.message);
+            }
+          }
+          main();
+          "
