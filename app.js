@@ -44,7 +44,8 @@ const urgences = [
 // ═══════════════════════════════════════
 // VILLES
 // ═══════════════════════════════════════
-const toutesVilles = [
+// Villes de base — sera complété dynamiquement
+const toutesVillesBase = [
   { nom: "Lomé", emoji: "🏙️" },
   { nom: "Kpalimé", emoji: "🌳" },
   { nom: "Kara", emoji: "⛰️" },
@@ -53,6 +54,9 @@ const toutesVilles = [
   { nom: "Tsévié", emoji: "🌊" },
   { nom: "Atakpamé", emoji: "🌴" }
 ];
+
+// Emojis par défaut pour nouvelles villes
+const emojiParDefaut = "🏘️";
 
 // ═══════════════════════════════════════
 // CHARGER PHARMACIES
