@@ -32,7 +32,6 @@ jobs:
               let articleUrl = '';
               home('a').each((i, el) => {
                 const href = home(el).attr('href') || '';
-                const text = home(el).text().toLowerCase();
                 if (href.includes('pharmacies-de-garde') && !articleUrl) {
                   articleUrl = href;
                 }
@@ -53,20 +52,24 @@ jobs:
               let villeActuelle = 'Lome';
               let zoneActuelle = 'A';
 
-              dollar('.entry-content h2, .entry-content h3, .entry-content li, .entry-content p').each((i, el) => {
-                const tag = el.tagName;
+              dollar('.entry-content h2, .entry-content h3, .entry-content li').each((i, el) => {
+                const tag = el.tagName.toLowerCase();
                 const texte = dollar(el).text().trim();
 
-                // Détecter la ville
+                // Detecter ville depuis h2
                 if (tag === 'h2') {
-                  if (texte.toLowerCase().includes('dapaong')) villeActuelle = 'Dapaong';
-                  else if (texte.toLowerCase().includes('kara')) villeActuelle = 'Kara';
-                  else if (texte.toLowerCase().includes('kpalim')) villeActuelle = 'Kpalime';
-                  else if (texte.toLowerCase().includes('sokod')) villeActuelle = 'Sokode';
-                  else if (texte.toLowerCase().includes('lom')) villeActuelle = 'Lome';
+                  const t = texte.toLowerCase();
+                  if (t.includes('dapaong')) villeActuelle = 'Dapaong';
+                  else if (t.includes('kara')) villeActuelle = 'Kara';
+                  else if (t.includes('kpalim')) villeActuelle = 'Kpalime';
+                  else if (t.includes('sokod')) villeActuelle = 'Sokode';
+                  else if (t.includes('tsev')) villeActuelle = 'Tsevie';
+                  else if (t.includes('atakpam')) villeActuelle = 'Atakpame';
+                  else if (t.includes('lom') || t.includes('interieur') === false) villeActuelle = 'Lome';
+                  console.log('Ville detectee:', villeActuelle);
                 }
 
-                // Détecter la zone
+                // Detecter zone depuis h3
                 if (tag === 'h3') {
                   if (texte.includes('Zone A')) zoneActuelle = 'A';
                   else if (texte.includes('Zone B')) zoneActuelle = 'B';
@@ -74,29 +77,42 @@ jobs:
                   else if (texte.includes('Zone D')) zoneActuelle = 'D';
                   else if (texte.includes('Zone E')) zoneActuelle = 'E';
                   else if (texte.match(/Zone [F-L]/)) zoneActuelle = 'F';
+                  else zoneActuelle = 'A';
                 }
 
-                // Détecter une pharmacie dans les li
+                // Detecter pharmacie depuis li
                 if (tag === 'li') {
                   const nom = dollar(el).find('strong').first().text().trim();
-                  const tel = dollar(el).find('a[href^=\"tel:\"]').attr('href')?.replace('tel:', '') || 
+                  const tel = dollar(el).find('a[href^=\"tel:\"]').attr('href')?.replace('tel:', '') ||
                               texte.match(/\+228\d+/)?.[0] || '';
                   const lignes = texte.split('\n').map(l => l.trim()).filter(l => l);
-                  const adresse = lignes[1] || '';
-                  const assurances = texte.toLowerCase().includes('inam') ? 'INAM' : 
-                                     texte.toLowerCase().includes('cnss') ? 'CNSS' : '';
+                  const adresse = lignes.slice(1).join(' ').replace(nom, '').trim().substring(0, 200);
+                  const assurances = [];
+                  if (texte.includes('INAM')) assurances.push('INAM');
+                  if (texte.includes('CNSS')) assurances.push('CNSS');
+                  if (texte.includes('AMU')) assurances.push('AMU');
+                  if (texte.includes('GTA')) assurances.push('GTA');
+                  if (texte.includes('SANLAM')) assurances.push('SANLAM');
+                  if (texte.includes('SUNU')) assurances.push('SUNU');
 
                   if (nom && nom.toLowerCase().includes('pharmac')) {
+                    // Corriger accents
+                    let villeFinale = villeActuelle;
+                    if (villeActuelle === 'Kpalime') villeFinale = 'Kpalime';
+                    if (villeActuelle === 'Sokode') villeFinale = 'Sokode';
+                    if (villeActuelle === 'Tsevie') villeFinale = 'Tsevie';
+                    if (villeActuelle === 'Atakpame') villeFinale = 'Atakpame';
+
                     pharmacies.push({
                       nom: nom.substring(0, 100),
-                      adresse: adresse.substring(0, 200),
+                      adresse: adresse,
                       tel: tel.substring(0, 20),
                       tel_affiche: tel.substring(0, 20),
-                      ville: villeActuelle,
+                      ville: villeFinale,
                       zone: zoneActuelle,
                       garde: 'soir',
                       heures: 'Toute la semaine',
-                      assurances: assurances,
+                      assurances: assurances.join(','),
                       actif: true
                     });
                   }
@@ -104,7 +120,11 @@ jobs:
               });
 
               console.log(pharmacies.length + ' pharmacies trouvees');
-              pharmacies.forEach(p => console.log(p.ville + ' | ' + p.zone + ' | ' + p.nom + ' | ' + p.tel));
+              
+              // Afficher résumé par ville
+              const parVille = {};
+              pharmacies.forEach(p => { parVille[p.ville] = (parVille[p.ville] || 0) + 1; });
+              console.log('Résumé:', JSON.stringify(parVille));
 
               if (pharmacies.length > 0) {
                 await supabase.from('pharmacies').delete().neq('id', 0);
