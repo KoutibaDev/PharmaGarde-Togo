@@ -22,16 +22,103 @@ body {
   min-height: 100vh;
 }
 
-/* ── RESPONSIVE : centré sur PC, plein écran sur mobile ── */
+/* ── RESPONSIVE : plein écran partout ── */
 .page {
-  max-width: 480px;
+  width: 100%;
+  max-width: 100%;
   margin: 0 auto;
   background: var(--bg);
   min-height: 100vh;
   position: relative;
-  box-shadow: 0 0 40px rgba(0,0,0,0.1);
 }
 
+/* Sur PC : mise en page en colonnes */
+@media (min-width: 768px) {
+  body {
+    background: var(--bg);
+  }
+
+  .app-header {
+    padding: 24px 40px;
+  }
+
+  .scroll-area {
+    padding: 24px 40px;
+    padding-bottom: 100px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 24px;
+    align-items: start;
+  }
+
+  .section-label {
+    grid-column: 1 / -1;
+  }
+
+  .tabs-wrap {
+    padding: 14px 40px;
+  }
+
+  .bottom-nav {
+    max-width: 100%;
+    padding: 10px 40px 24px;
+    justify-content: center;
+    gap: 40px;
+  }
+
+  .nav-btn {
+    flex: 0;
+    padding: 6px 20px;
+  }
+
+  .contact-hero {
+    padding: 32px 40px;
+  }
+
+  .contact-body {
+    padding: 32px 40px;
+    max-width: 600px;
+  }
+
+  .ville-header {
+    padding: 24px 40px 16px;
+  }
+
+  .ville-list {
+    padding: 24px 40px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+
+  .ville-item {
+    margin-bottom: 0;
+  }
+
+  .urg-grid {
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+  }
+}
+
+@media (min-width: 1200px) {
+  .scroll-area {
+    padding: 32px 80px;
+    padding-bottom: 100px;
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .app-header {
+    padding: 32px 80px;
+  }
+
+  .tabs-wrap {
+    padding: 14px 80px;
+  }
+
+  .bottom-nav {
+    padding: 10px 80px 24px;
+  }
+}
 /* HEADER */
 .app-header {
   background: linear-gradient(135deg, var(--g1), var(--g2));
