@@ -20,24 +20,44 @@
 </div>
 
 <!-- PAGE ACCUEIL -->
-<div class="page" id="page-home">
-  <div class="install-banner" id="install-banner" onclick="installerApp()" style="cursor:pointer;display:flex;">
-    <span>📲</span>
-    <span class="install-strip-text">Installer l'app sur votre écran d'accueil</span>
-    <span onclick="event.stopPropagation();document.getElementById('install-banner').style.display='none'" style="cursor:pointer;opacity:0.6;margin-left:16px;">✕</span>
+<div class="install-banner" id="install-banner" onclick="installerApp()" style="cursor:pointer;display:flex;">
+  <div class="banner-track">
+    <span class="banner-item">📲 Installer PharmaGarde sur votre écran d'accueil</span>
+    <span class="banner-dot"></span>
+    <span class="banner-item">💊 Pharmacies de garde au Togo</span>
+    <span class="banner-dot"></span>
+    <span class="banner-item">📍 Trouvez la pharmacie la plus proche</span>
+    <span class="banner-dot"></span>
+    <span class="banner-item">🚨 Numéros d'urgence disponibles</span>
+    <span class="banner-dot"></span>
+    <span class="banner-item">📲 Installer PharmaGarde sur votre écran d'accueil</span>
+    <span class="banner-dot"></span>
+    <span class="banner-item">💊 Pharmacies de garde au Togo</span>
+    <span class="banner-dot"></span>
+    <span class="banner-item">📍 Trouvez la pharmacie la plus proche</span>
+    <span class="banner-dot"></span>
+    <span class="banner-item">🚨 Numéros d'urgence disponibles</span>
+    <span class="banner-dot"></span>
   </div>
+</div>
 
   <div class="app-header">
+  <div class="header-top">
     <div class="header-logo" onclick="afficherPage('page-home')" style="cursor:pointer;">Pharma<em>Garde</em></div>
-    <div class="location-pill" onclick="afficherPage('page-villes')">
-      <span>📍</span>
-      <div style="flex:1;">
-        <div class="loc-main" id="loc-main">Détection GPS...</div>
-        <div class="loc-sub" id="loc-sub">Appuyez pour changer de ville</div>
-      </div>
-      <span style="opacity:0.7;">›</span>
+    <div class="header-badge">
+      <div class="live-dot"></div>
+      <span>En ligne</span>
     </div>
   </div>
+  <div class="location-pill" onclick="afficherPage('page-villes')">
+    <span>📍</span>
+    <div style="flex:1;">
+      <div class="loc-main" id="loc-main">Détection GPS...</div>
+      <div class="loc-sub" id="loc-sub">Appuyez pour changer de ville</div>
+    </div>
+    <span style="opacity:0.7;">›</span>
+  </div>
+</div>
 
  
 
