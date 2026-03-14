@@ -120,11 +120,11 @@ function afficherPharmacie(p) {
 // ═══════════════════════════════════════
 function afficherUrgences() {
   return urgences.map(u => `
-    <div class="urg-card ${u.couleur}">
+    <a href="tel:${u.numero}" class="urg-card ${u.couleur}" style="text-decoration:none;">
       <div class="urg-emoji">${u.emoji}</div>
       <div class="urg-name">${u.nom}</div>
-      <a href="tel:${u.numero}" class="urg-num" style="text-decoration:none;">${u.numero}</a>
-    </div>
+      <div class="urg-num">${u.numero}</div>
+    </a>
   `).join('');
 }
 
