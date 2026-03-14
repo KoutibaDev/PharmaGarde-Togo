@@ -17,118 +17,29 @@
 
 body {
   font-family: 'Outfit', sans-serif;
-  background: #E8F0EB;
+  background: var(--bg);
   color: var(--text);
   min-height: 100vh;
 }
 
-/* ── RESPONSIVE : plein écran partout ── */
 .page {
   width: 100%;
-  max-width: 100%;
-  margin: 0 auto;
   background: var(--bg);
   min-height: 100vh;
-  position: relative;
 }
 
-/* Sur PC : mise en page en colonnes */
-@media (min-width: 768px) {
-  body {
-    background: var(--bg);
-  }
-
-  .app-header {
-    padding: 24px 40px;
-  }
-
-  .scroll-area {
-    padding: 24px 40px;
-    padding-bottom: 100px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0 24px;
-    align-items: start;
-  }
-
-  .section-label {
-    grid-column: 1 / -1;
-  }
-
-  .tabs-wrap {
-    padding: 14px 40px;
-  }
-
-  .bottom-nav {
-    max-width: 100%;
-    padding: 10px 40px 24px;
-    justify-content: center;
-    gap: 40px;
-  }
-
-  .nav-btn {
-    flex: 0;
-    padding: 6px 20px;
-  }
-
-  .contact-hero {
-    padding: 32px 40px;
-  }
-
-  .contact-body {
-    padding: 32px 40px;
-    max-width: 600px;
-  }
-
-  .ville-header {
-    padding: 24px 40px 16px;
-  }
-
-  .ville-list {
-    padding: 24px 40px;
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 12px;
-  }
-
-  .ville-item {
-    margin-bottom: 0;
-  }
-
-  .urg-grid {
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-  }
-}
-
-@media (min-width: 1200px) {
-  .scroll-area {
-    padding: 32px 80px;
-    padding-bottom: 100px;
-    grid-template-columns: 1fr 1fr 1fr;
-  }
-
-  .app-header {
-    padding: 32px 80px;
-  }
-
-  .tabs-wrap {
-    padding: 14px 80px;
-  }
-
-  .bottom-nav {
-    padding: 10px 80px 24px;
-  }
-}
-/* HEADER */
+/* ══════════════════════════════
+   HEADER
+══════════════════════════════ */
 .app-header {
   background: linear-gradient(135deg, var(--g1), var(--g2));
-  padding: 52px 20px 24px;
+  padding: 20px 24px;
   color: white;
 }
 
 .header-logo {
   font-family: 'Fraunces', serif;
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 700;
   margin-bottom: 14px;
 }
@@ -144,29 +55,34 @@ body {
   border-radius: 14px;
   padding: 12px 14px;
   cursor: pointer;
+  max-width: 480px;
 }
 
 .loc-main { font-size: 14px; font-weight: 600; }
 .loc-sub { font-size: 11px; opacity: 0.65; }
 
-/* INSTALL BANNER */
+/* ══════════════════════════════
+   INSTALL BANNER
+══════════════════════════════ */
 .install-banner {
   background: var(--gold);
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 16px;
-  font-size: 12px;
+  padding: 10px 24px;
+  font-size: 13px;
   font-weight: 700;
   color: #1a1a1a;
 }
 
 .install-strip-text { flex: 1; }
 
-/* TABS */
+/* ══════════════════════════════
+   TABS
+══════════════════════════════ */
 .tabs-wrap {
   background: var(--white);
-  padding: 12px 16px;
+  padding: 12px 24px;
   display: flex;
   gap: 8px;
   border-bottom: 1px solid var(--border);
@@ -174,9 +90,9 @@ body {
 }
 
 .tab {
-  padding: 7px 14px;
+  padding: 8px 20px;
   border-radius: 20px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   border: 1.5px solid var(--border);
@@ -184,6 +100,7 @@ body {
   color: var(--sub);
   white-space: nowrap;
   font-family: 'Outfit', sans-serif;
+  transition: all 0.2s;
 }
 
 .tab.on {
@@ -192,10 +109,12 @@ body {
   color: white;
 }
 
-/* CONTENT */
+/* ══════════════════════════════
+   CONTENU PRINCIPAL
+══════════════════════════════ */
 .scroll-area {
-  padding: 16px;
-  padding-bottom: 90px;
+  padding: 24px;
+  padding-bottom: 100px;
 }
 
 .section-label {
@@ -204,7 +123,7 @@ body {
   letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--sub);
-  margin-bottom: 10px;
+  margin-bottom: 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -214,21 +133,36 @@ body {
   background: var(--g3);
   color: white;
   border-radius: 20px;
-  padding: 2px 8px;
+  padding: 2px 10px;
   font-size: 10px;
   letter-spacing: 0;
 }
 
-/* PHARMACY CARD */
+/* Grille pour les cartes pharmacies */
+#liste-pharmacies {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+/* ══════════════════════════════
+   CARTE PHARMACIE
+══════════════════════════════ */
 .pharm-card {
   background: var(--white);
   border-radius: 18px;
-  padding: 16px;
-  margin-bottom: 12px;
+  padding: 18px;
   box-shadow: 0 2px 16px rgba(0,107,60,0.08);
   border: 1.5px solid transparent;
   position: relative;
   overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.pharm-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(0,107,60,0.14);
 }
 
 .pharm-card.h24::before {
@@ -243,11 +177,11 @@ body {
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .pharm-name {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--text);
   flex: 1;
@@ -255,8 +189,8 @@ body {
 
 .garde-chip {
   border-radius: 8px;
-  padding: 3px 9px;
-  font-size: 10px;
+  padding: 4px 10px;
+  font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -267,15 +201,15 @@ body {
 .card-meta {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-bottom: 12px;
+  gap: 5px;
+  margin-bottom: 14px;
 }
 
 .meta-row {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--sub);
 }
 
@@ -283,15 +217,15 @@ body {
   display: flex;
   gap: 5px;
   flex-wrap: wrap;
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 .assur-tag {
   background: #EEF4FF;
   color: #2563EB;
   border-radius: 6px;
-  padding: 2px 7px;
-  font-size: 10px;
+  padding: 3px 8px;
+  font-size: 11px;
   font-weight: 600;
 }
 
@@ -303,9 +237,9 @@ body {
   color: white;
   border: none;
   border-radius: 12px;
-  padding: 11px;
+  padding: 12px;
   font-family: 'Outfit', sans-serif;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   display: flex;
@@ -313,130 +247,162 @@ body {
   justify-content: center;
   gap: 6px;
   text-decoration: none;
+  transition: background 0.2s;
 }
 
+.btn-call:hover { background: #004D2C; }
+
 .btn-icon {
-  width: 40px; height: 40px;
+  width: 44px; height: 44px;
   border-radius: 12px;
   border: 1.5px solid var(--border);
   background: var(--bg);
-  font-size: 16px;
+  font-size: 18px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   text-decoration: none;
+  transition: all 0.2s;
 }
 
-/* URGENCES GRILLE */
+.btn-icon:hover { border-color: var(--g2); background: white; }
+
+/* ══════════════════════════════
+   URGENCES GRILLE
+══════════════════════════════ */
 .urg-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
   margin-bottom: 16px;
 }
 
 .urg-card {
   border-radius: 16px;
-  padding: 16px 14px;
+  padding: 18px 16px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   gap: 6px;
   text-decoration: none;
+  transition: transform 0.2s;
 }
+
+.urg-card:hover { transform: scale(1.03); }
 
 .urg-card.r { background: #FFF0EE; border: 1.5px solid #FFD4CF; }
 .urg-card.b { background: #EEF4FF; border: 1.5px solid #C8DCFF; }
 .urg-card.o { background: #FFF8EE; border: 1.5px solid #FFE4B8; }
 .urg-card.g { background: #F0FFF8; border: 1.5px solid #B8F0D4; }
 
-.urg-emoji { font-size: 28px; }
-.urg-name { font-size: 12px; font-weight: 700; color: var(--text); }
-.urg-num { font-size: 26px; font-weight: 900; letter-spacing: -1px; text-decoration: none; }
+.urg-emoji { font-size: 30px; }
+.urg-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.urg-num { font-size: 28px; font-weight: 900; letter-spacing: -1px; text-decoration: none; }
 .urg-card.r .urg-num { color: var(--red); }
 .urg-card.b .urg-num { color: #0A84FF; }
 .urg-card.o .urg-num { color: #FF9500; }
-.urg-card.g .urg-num { color: var(--g1); font-size: 13px; }
+.urg-card.g .urg-num { color: var(--g1); font-size: 14px; }
 
-/* URGENCES PAGE COMPLÈTE */
+/* ══════════════════════════════
+   URGENCES PAGE COMPLÈTE
+══════════════════════════════ */
+#urgences-page {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
 .urg-full {
   background: var(--white);
   border-radius: 16px;
-  padding: 16px;
-  margin-bottom: 10px;
+  padding: 18px;
   display: flex;
   align-items: center;
   gap: 14px;
   box-shadow: 0 2px 8px rgba(0,107,60,0.06);
   text-decoration: none;
+  transition: transform 0.2s;
 }
 
+.urg-full:hover { transform: translateY(-2px); }
+
 .urg-full-icon {
-  width: 48px; height: 48px;
+  width: 52px; height: 52px;
   border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 26px;
   flex-shrink: 0;
 }
 
 .urg-full-info { flex: 1; }
-.urg-full-name { font-size: 14px; font-weight: 700; color: var(--text); }
-.urg-full-sub { font-size: 11px; color: var(--sub); margin-top: 2px; }
-.urg-full-num { font-size: 22px; font-weight: 900; color: var(--red); text-decoration: none; }
+.urg-full-name { font-size: 15px; font-weight: 700; color: var(--text); }
+.urg-full-sub { font-size: 12px; color: var(--sub); margin-top: 2px; }
+.urg-full-num { font-size: 24px; font-weight: 900; color: var(--red); text-decoration: none; }
 
-/* BOTTOM NAV */
+/* ══════════════════════════════
+   BOTTOM NAV
+══════════════════════════════ */
 .bottom-nav {
   position: fixed;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 480px;
+  left: 0;
+  right: 0;
   background: var(--white);
   border-top: 1px solid var(--border);
   display: flex;
-  padding: 8px 0 24px;
+  justify-content: center;
+  padding: 10px 0 20px;
   z-index: 100;
+  gap: 0;
 }
 
 .nav-btn {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 3px;
   cursor: pointer;
-  padding: 6px 4px;
+  padding: 6px 48px;
   background: none;
   border: none;
   font-family: 'Outfit', sans-serif;
+  transition: transform 0.15s;
 }
 
+.nav-btn:hover { transform: translateY(-2px); }
+
 .nav-icon { font-size: 22px; }
-.nav-label { font-size: 10px; font-weight: 600; color: var(--sub); }
+.nav-label { font-size: 11px; font-weight: 600; color: var(--sub); }
 .nav-btn.on .nav-label { color: var(--g1); }
 .nav-pip { width: 4px; height: 4px; border-radius: 50%; background: var(--g1); opacity: 0; margin-top: 1px; }
 .nav-btn.on .nav-pip { opacity: 1; }
 
-/* CONTACT */
+/* ══════════════════════════════
+   CONTACT
+══════════════════════════════ */
 .contact-hero {
   background: linear-gradient(135deg, var(--g1), var(--g2));
-  padding: 52px 20px 24px;
+  padding: 24px;
   color: white;
 }
 
 .contact-title {
   font-family: 'Fraunces', serif;
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 700;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
-.contact-sub { font-size: 13px; opacity: 0.7; }
-.contact-body { padding: 20px; padding-bottom: 100px; }
+.contact-sub { font-size: 14px; opacity: 0.7; }
+
+.contact-body {
+  padding: 24px;
+  padding-bottom: 100px;
+  max-width: 640px;
+}
 
 .form-label {
   font-size: 11px;
@@ -453,16 +419,18 @@ body {
   background: var(--white);
   border: 1.5px solid var(--border);
   border-radius: 14px;
-  padding: 13px 15px;
+  padding: 14px 16px;
   font-family: 'Outfit', sans-serif;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--text);
   outline: none;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   display: block;
+  transition: border-color 0.2s;
 }
 
-textarea.form-input { resize: none; height: 90px; }
+.form-input:focus { border-color: var(--g2); }
+textarea.form-input { resize: none; height: 100px; }
 
 .wa-btn {
   width: 100%;
@@ -472,19 +440,25 @@ textarea.form-input { resize: none; height: 90px; }
   border-radius: 16px;
   padding: 16px;
   font-family: 'Outfit', sans-serif;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 800;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  transition: background 0.2s;
+  box-shadow: 0 4px 16px rgba(37,211,102,0.3);
 }
 
-/* VILLES */
+.wa-btn:hover { background: #1aad52; }
+
+/* ══════════════════════════════
+   VILLES
+══════════════════════════════ */
 .ville-header {
   background: var(--white);
-  padding: 20px 20px 16px;
+  padding: 20px 24px 16px;
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
@@ -492,7 +466,7 @@ textarea.form-input { resize: none; height: 90px; }
 }
 
 .ville-title {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 800;
   margin-bottom: 12px;
 }
@@ -501,26 +475,35 @@ textarea.form-input { resize: none; height: 90px; }
   background: var(--bg);
   border: 1.5px solid var(--border);
   border-radius: 12px;
-  padding: 10px 14px;
+  padding: 12px 16px;
   font-family: 'Outfit', sans-serif;
   font-size: 14px;
   width: 100%;
+  max-width: 480px;
   outline: none;
 }
 
-.ville-list { padding: 16px; padding-bottom: 40px; }
+.ville-list {
+  padding: 24px;
+  padding-bottom: 40px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
 
 .ville-item {
   background: var(--white);
   border-radius: 14px;
-  padding: 14px 16px;
-  margin-bottom: 8px;
+  padding: 16px;
   display: flex;
   align-items: center;
   gap: 12px;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0,107,60,0.06);
+  transition: transform 0.2s;
 }
+
+.ville-item:hover { transform: translateY(-2px); }
 
 .ville-name { flex: 1; font-size: 15px; font-weight: 700; }
 .ville-count { font-size: 12px; color: var(--sub); }
