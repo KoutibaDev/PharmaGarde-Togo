@@ -9,15 +9,22 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
           node-version: '18'
 
-      - run: npm install node-fetch@2 cheerio @supabase/supabase-js
+      - name: Verifier fichiers
+        run: ls -la && ls -la scripts/
 
-      - run: node scripts/update-pharmacies.js
+      - name: Installer dependances
+        run: npm install
+
+      - name: Lancer script
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: node scripts/update-pharmacies.js
