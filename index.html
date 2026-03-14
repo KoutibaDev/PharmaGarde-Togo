@@ -11,33 +11,36 @@
 <body>
 
 <!-- PAGE ACCUEIL -->
-<div class="install-banner" id="install-banner" onclick="installerApp()" style="cursor:pointer;justify-content:center;">
-  <span>📲</span>
-  <span class="install-strip-text" style="flex:unset;">Installer l'app sur votre écran d'accueil</span>
-  <span onclick="event.stopPropagation();document.getElementById('install-banner').style.display='none'" style="cursor:pointer;opacity:0.6;margin-left:16px;">✕</span>
-</div>
+<div class="page" id="page-home">
+
+  <div class="install-banner" id="install-banner" onclick="installerApp()" style="cursor:pointer;display:none;">
+    <span>📲</span>
+    <span class="install-strip-text">Installer l'app sur votre écran d'accueil</span>
+    <span onclick="event.stopPropagation();document.getElementById('install-banner').style.display='none'" style="cursor:pointer;opacity:0.6;margin-left:16px;">✕</span>
+  </div>
 
   <div class="app-header">
     <div class="header-logo">Pharma<em>Garde</em></div>
     <div class="location-pill" onclick="afficherPage('page-villes')">
       <span>📍</span>
-      <div>
-        <div class="loc-main" id="loc-main">Lomé — Détection GPS...</div>
+      <div style="flex:1;">
+        <div class="loc-main" id="loc-main">Détection GPS...</div>
         <div class="loc-sub" id="loc-sub">Appuyez pour changer de ville</div>
       </div>
-      <span>›</span>
+      <span style="opacity:0.7;">›</span>
     </div>
   </div>
 
   <div class="tabs-wrap">
-  <div class="tab on" id="tab-soir" onclick="changerOnglet('soir')">🌆 Ce soir</div>
-  <div class="tab" id="tab-nuit" onclick="changerOnglet('nuit')">🌙 Cette nuit</div>
-  <div class="tab" id="tab-demain" onclick="changerOnglet('demain')">☀️ Demain</div>
-</div>
+    <div class="tab on" id="tab-soir" onclick="changerOnglet('soir')">🌆 Ce soir</div>
+    <div class="tab" id="tab-nuit" onclick="changerOnglet('nuit')">🌙 Cette nuit</div>
+    <div class="tab" id="tab-demain" onclick="changerOnglet('demain')">☀️ Demain</div>
+  </div>
+
   <div class="scroll-area">
     <div class="section-label">
       Pharmacies de garde
-    <span class="count-badge" id="count-badge">3 trouvées</span>
+      <span class="count-badge" id="count-badge">...</span>
     </div>
     <div id="liste-pharmacies"></div>
 
@@ -67,11 +70,11 @@
 <!-- PAGE VILLES -->
 <div class="page" id="page-villes" style="display:none;">
   <div class="ville-header">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-      <button onclick="afficherPage('page-home')" style="background:none;border:none;font-size:24px;cursor:pointer;">‹</button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <button onclick="afficherPage('page-home')" style="background:none;border:none;font-size:28px;cursor:pointer;color:var(--text);line-height:1;">‹</button>
       <div class="ville-title">Choisir une ville</div>
     </div>
-    <input class="search-box" placeholder="🔍 Rechercher une ville...">
+    <input class="search-box" placeholder="🔍 Rechercher une ville..." oninput="filtrerVilles(this.value)">
   </div>
   <div class="ville-list" id="liste-villes"></div>
 </div>
@@ -79,19 +82,17 @@
 <!-- PAGE URGENCES -->
 <div class="page" id="page-urgences" style="display:none;">
   <div class="app-header">
-    <div style="display:flex;align-items:center;gap:10px;">
-      <button onclick="afficherPage('page-home')" style="background:none;border:none;color:white;font-size:24px;cursor:pointer;">‹</button>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button onclick="afficherPage('page-home')" style="background:none;border:none;color:white;font-size:28px;cursor:pointer;line-height:1;">‹</button>
       <div class="header-logo">Pharma<em>Garde</em></div>
     </div>
   </div>
-
   <div class="scroll-area">
     <div class="section-label">Numéros d'urgence · Togo</div>
     <div id="urgences-page"></div>
   </div>
-
   <div class="bottom-nav">
-    <button class="nav-btn" id="nav-home2" onclick="afficherPage('page-home')">
+    <button class="nav-btn" onclick="afficherPage('page-home')">
       <span class="nav-icon">💊</span>
       <span class="nav-label">Pharmacies</span>
       <div class="nav-pip"></div>
@@ -101,7 +102,7 @@
       <span class="nav-label">Urgences</span>
       <div class="nav-pip"></div>
     </button>
-    <button class="nav-btn" id="nav-contact2" onclick="afficherPage('page-contact')">
+    <button class="nav-btn" onclick="afficherPage('page-contact')">
       <span class="nav-icon">✉️</span>
       <span class="nav-label">Contact</span>
       <div class="nav-pip"></div>
@@ -112,13 +113,13 @@
 <!-- PAGE CONTACT -->
 <div class="page" id="page-contact" style="display:none;">
   <div class="contact-hero">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-      <button onclick="afficherPage('page-home')" style="background:none;border:none;color:white;font-size:24px;cursor:pointer;">‹</button>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <button onclick="afficherPage('page-home')" style="background:none;border:none;color:white;font-size:28px;cursor:pointer;line-height:1;">‹</button>
+      <div class="header-logo">Pharma<em>Garde</em></div>
     </div>
     <div class="contact-title">Nous écrire 💬</div>
     <div class="contact-sub">Pharmacie manquante ? Erreur ? Signalez-le.</div>
   </div>
-
   <div class="contact-body">
     <label class="form-label">Votre numéro WhatsApp</label>
     <input class="form-input" id="input-tel" type="tel" placeholder="+228 XX XX XX XX">
@@ -132,11 +133,10 @@
     <button class="wa-btn" onclick="envoyerWhatsApp()">
       💬 Envoyer via WhatsApp
     </button>
-    <div style="text-align:center;color:#5A7A68;font-size:11px;margin-top:12px;">
+    <div style="text-align:center;color:#5A7A68;font-size:12px;margin-top:12px;">
       Réponse sous 24h · Vos données restent privées
     </div>
   </div>
-
   <div class="bottom-nav">
     <button class="nav-btn" onclick="afficherPage('page-home')">
       <span class="nav-icon">💊</span>
@@ -155,6 +155,7 @@
     </button>
   </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="app.js"></script>
 </body>
