@@ -1,4 +1,28 @@
 // ═══════════════════════════════════════
+// CONNEXION SUPABASE
+// ═══════════════════════════════════════
+const SUPABASE_URL = 'https://secjfgzzmsvatsmaxbud.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlY2pmZ3p6bXN2YXRzbWF4YnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0OTQ5MzYsImV4cCI6MjA4OTA3MDkzNn0.2EYq4WZtth5QBlEr3GRoUcrHtyw3kR3brRkQEhzFqIo';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ═══════════════════════════════════════
+// CHARGER LES PHARMACIES DEPUIS SUPABASE
+// ═══════════════════════════════════════
+async function chargerPharmaciess(garde = 'soir', ville = 'Lomé') {
+  const { data, error } = await supabase
+    .from('pharmacies')
+    .select('*')
+    .eq('actif', true)
+    .or(`garde.eq.${garde},garde.eq.24h/24`)
+    .eq('ville', ville);
+
+  if (error) {
+    console.error('Erreur Supabase:', error);
+    return [];
+  }
+  return data;
+}
+// ═══════════════════════════════════════
 // DONNÉES DES PHARMACIES
 // ═══════════════════════════════════════
 const pharmacies = {
@@ -240,10 +264,26 @@ function installerApp() {
 // ═══════════════════════════════════════
 // INITIALISATION
 // ═══════════════════════════════════════
-window.onload = function () {
-  // Pharmacies
+window.onload = async function () {
+  // Charger les pharmacies depuis Supabase
+  const data = await chargerPharmaciess('soir', 'Lomé');
+  
+  const liste = data.length > 0 ? data : pharmacies.soir;
+  
   document.getElementById('liste-pharmacies').innerHTML =
-    pharmacies.soir.map(afficherPharmacie).join('');
+    liste.map(p => afficherPharmacie({
+      nom: p.nom,
+      adresse: p.adresse,
+      ville: p.ville,
+      tel: p.tel,
+      telAffiche: p.tel_affiche,
+      garde: p.garde,
+      heures: p.heures,
+      assurances: p.assurances ? p.assurances.split(',') : []
+    })).join('');
+
+  document.getElementById('count-badge').textContent =
+    liste.length + ' trouvée' + (liste.length > 1 ? 's' : '');
 
   // Urgences page home
   document.getElementById('urgences-home').innerHTML = afficherUrgences();
@@ -263,6 +303,45 @@ window.onload = function () {
       };">${u.numeroAffiche || u.numero}</div>
     </a>
   `).join('');
+
+  // Villes
+  document.getElementById('liste-villes').innerHTML = afficherVilles();
+
+  // GPS
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(async function (pos) {
+      document.getElementById('loc-main').textContent = 'Lomé — Position détectée';
+      document.getElementById('loc-sub').textContent = 'GPS actif · Appuyez pour changer';
+    });
+  }
+};
+
+// Mettre à jour changerOnglet pour utiliser Supabase
+async function changerOnglet(onglet) {
+  ongletActif = onglet;
+
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.getElementById('tab-' + onglet).classList.add('on');
+
+  const garde = onglet === 'nuit' ? 'nuit' : onglet === 'demain' ? 'demain' : 'soir';
+  const data = await chargerPharmaciess(garde, 'Lomé');
+  const liste = data.length > 0 ? data : pharmacies[onglet] || pharmacies.soir;
+
+  document.getElementById('liste-pharmacies').innerHTML =
+    liste.map(p => afficherPharmacie({
+      nom: p.nom || p.nom,
+      adresse: p.adresse,
+      ville: p.ville,
+      tel: p.tel,
+      telAffiche: p.tel_affiche || p.telAffiche,
+      garde: p.garde,
+      heures: p.heures,
+      assurances: p.assurances ? p.assurances.split(',') : (p.assurances || [])
+    })).join('');
+
+  document.getElementById('count-badge').textContent =
+    liste.length + ' trouvée' + (liste.length > 1 ? 's' : '');
+}
 
   // Villes
   document.getElementById('liste-villes').innerHTML = afficherVilles();
