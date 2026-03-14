@@ -12,10 +12,27 @@
 </head>
 <body>
 
-<!-- POPUP PHARMACIE -->
-<div id="popup-overlay" onclick="fermerPopup()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;"></div>
-<div id="popup-pharmacie" style="display:none;position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:600px;background:white;border-radius:24px 24px 0 0;z-index:1001;padding:24px;box-shadow:0 -8px 40px rgba(0,0,0,0.2);">
-  <div style="width:40px;height:4px;background:#D0E8DA;border-radius:2px;margin:0 auto 20px;"></div>
+<!-- ═══════════════════════════
+     SPLASH SCREEN
+════════════════════════════ -->
+<div id="splash-screen">
+  <div class="splash-icon">💊</div>
+  <div class="splash-logo">Pharma<em>Garde</em></div>
+  <div class="splash-tagline">Pharmacies de garde au Togo</div>
+  <div class="splash-loader"><div class="splash-loader-bar"></div></div>
+  <div class="splash-flag">
+    <span style="background:#006B3C;"></span>
+    <span style="background:#FFD100;"></span>
+    <span style="background:#D21034;"></span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════
+     POPUP PHARMACIE
+════════════════════════════ -->
+<div id="popup-overlay" onclick="fermerPopup()" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;backdrop-filter:blur(4px);"></div>
+<div id="popup-pharmacie" style="display:none;position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:600px;background:var(--white);border-radius:24px 24px 0 0;z-index:1001;padding:24px;box-shadow:0 -8px 40px rgba(0,0,0,0.2);">
+  <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px;"></div>
   <div id="popup-content"></div>
 </div>
 
@@ -24,8 +41,7 @@
 ════════════════════════════ -->
 <div class="page" id="page-home">
 
-  <!-- Bannière défilante -->
-  <div class="install-banner" id="install-banner" onclick="installerApp()" style="cursor:pointer;display:flex;">
+  <div class="install-banner" id="install-banner" onclick="installerApp()" style="cursor:pointer;">
     <div class="banner-track">
       <span class="banner-item">📲 Installer PharmaGarde sur votre écran d'accueil</span>
       <span class="banner-dot"></span>
@@ -46,16 +62,18 @@
     </div>
   </div>
 
-  <!-- Header -->
   <div class="app-header">
     <div class="header-top">
-      <div class="header-logo" onclick="afficherPage('page-home')">Pharma<em>Garde</em></div>
-      <div class="header-badge">
-        <div class="live-dot"></div>
-        <span>En ligne</span>
+      <div class="header-logo" onclick="afficherPage('page-home', false)">Pharma<em>Garde</em></div>
+      <div class="header-actions">
+        <button class="dark-toggle" onclick="toggleDark()" id="dark-btn" title="Mode sombre">🌙</button>
+        <div class="header-badge">
+          <div class="live-dot"></div>
+          <span>En ligne</span>
+        </div>
       </div>
     </div>
-    <div class="location-pill" onclick="afficherPage('page-villes')">
+    <div class="location-pill" onclick="afficherPage('page-villes', true)">
       <span>📍</span>
       <div style="flex:1;">
         <div class="loc-main" id="loc-main">Détection GPS...</div>
@@ -65,7 +83,6 @@
     </div>
   </div>
 
-  <!-- Description accueil -->
   <div class="hero-description">
     <div class="hero-stats">
       <div class="hero-stat">
@@ -74,7 +91,7 @@
       </div>
       <div class="hero-stat-divider"></div>
       <div class="hero-stat">
-        <span class="hero-stat-num">7</span>
+        <span class="hero-stat-num" id="stat-villes">—</span>
         <span class="hero-stat-label">Villes</span>
       </div>
       <div class="hero-stat-divider"></div>
@@ -83,13 +100,16 @@
         <span class="hero-stat-label">Disponible</span>
       </div>
     </div>
-    <p class="hero-text">
-      Trouvez rapidement une pharmacie de garde près de chez vous, partout au Togo.
-    </p>
+    <p class="hero-text">Trouvez rapidement une pharmacie de garde près de chez vous, partout au Togo.</p>
+    <div class="update-badge" id="update-badge">🔄 Chargement...</div>
+  </div>
+
+  <!-- Barre de recherche -->
+  <div class="search-bar-wrap">
+    <input class="search-bar" id="search-input" placeholder="Rechercher une pharmacie ou un quartier..." oninput="rechercherPharmacie(this.value)">
   </div>
 
   <div class="scroll-area">
-    <!-- Pharmacie la plus proche -->
     <div id="plus-proche-section" style="display:none;">
       <div class="section-label">📍 La plus proche de vous</div>
       <div id="plus-proche-card"></div>
@@ -101,7 +121,7 @@
     </div>
     <div id="liste-pharmacies"></div>
 
-    <button class="voir-toutes-btn" onclick="afficherPage('page-toutes')">
+    <button class="voir-toutes-btn" onclick="afficherPage('page-toutes', true)">
       Voir toutes les pharmacies →
     </button>
 
@@ -110,182 +130,19 @@
   </div>
 
   <div class="bottom-nav">
-    <button class="nav-btn on" id="nav-home" onclick="afficherPage('page-home')">
+    <button class="nav-btn on" id="nav-home" onclick="afficherPage('page-home', false)">
       <span class="nav-icon">💊</span>
       <span class="nav-label">Pharmacies</span>
       <div class="nav-pip"></div>
     </button>
-    <button class="nav-btn" id="nav-urgences" onclick="afficherPage('page-urgences')">
+    <button class="nav-btn" id="nav-urgences" onclick="afficherPage('page-urgences', true)">
       <span class="nav-icon">🚨</span>
       <span class="nav-label">Urgences</span>
       <div class="nav-pip"></div>
     </button>
-    <button class="nav-btn" id="nav-contact" onclick="afficherPage('page-contact')">
-  <span class="nav-icon" style="color:#25D366;">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="#25D366">
-      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-    </svg>
-  </span>
-  <span class="nav-label">Contact</span>
-  <div class="nav-pip"></div>
-</button>
-  </div>
-</div>
-
-<!-- ═══════════════════════════
-     PAGE TOUTES LES PHARMACIES
-════════════════════════════ -->
-<div class="page" id="page-toutes" style="display:none;">
-  <div class="app-header">
-    <div class="header-top">
-      <button onclick="afficherPage('page-home')" style="background:none;border:none;color:white;font-size:28px;cursor:pointer;line-height:1;">‹</button>
-      <div class="header-logo">Toutes les pharmacies</div>
-      <div style="width:28px;"></div>
-    </div>
-  </div>
-
-  <div style="padding:12px 20px;background:white;border-bottom:1px solid var(--border);">
-    <select id="select-ville" onchange="changerVilleToutes(this.value)" style="width:100%;padding:10px 14px;border-radius:14px;border:1.5px solid var(--border);font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;color:var(--text);background:var(--bg);outline:none;">
-      <option value="Lomé">🏙️ Lomé</option>
-      <option value="Kpalimé">🌳 Kpalimé</option>
-      <option value="Kara">⛰️ Kara</option>
-      <option value="Sokodé">🌾 Sokodé</option>
-      <option value="Dapaong">🏜️ Dapaong</option>
-      <option value="Tsévié">🌊 Tsévié</option>
-      <option value="Atakpamé">🌴 Atakpamé</option>
-    </select>
-  </div>
-
-  <div id="carte-container" style="height:200px;">
-    <div id="carte-lome" style="height:200px;width:100%;"></div>
-  </div>
-
-  <div class="scroll-area" style="padding-top:16px;">
-    <div class="section-label">
-      Liste complète
-      <span class="count-badge" id="count-toutes">...</span>
-    </div>
-    <div id="liste-toutes"></div>
-  </div>
-
-  <div class="bottom-nav">
-    <button class="nav-btn on" onclick="afficherPage('page-home')">
-      <span class="nav-icon">💊</span>
-      <span class="nav-label">Pharmacies</span>
-      <div class="nav-pip"></div>
-    </button>
-    <button class="nav-btn" onclick="afficherPage('page-urgences')">
-      <span class="nav-icon">🚨</span>
-      <span class="nav-label">Urgences</span>
-      <div class="nav-pip"></div>
-    </button>
-   <button class="nav-btn" id="nav-contact" onclick="afficherPage('page-contact')">
-  <span class="nav-icon" style="color:#25D366;">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="#25D366">
-      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-    </svg>
-  </span>
-  <span class="nav-label">Contact</span>
-  <div class="nav-pip"></div>
-</button>
-  </div>
-</div>
-
-<!-- ═══════════════════════════
-     PAGE VILLES
-════════════════════════════ -->
-<div class="page" id="page-villes" style="display:none;">
-  <div class="ville-header">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
-      <button onclick="afficherPage('page-home')" style="background:none;border:none;font-size:28px;cursor:pointer;color:var(--text);line-height:1;">‹</button>
-      <div class="ville-title">Choisir une ville</div>
-    </div>
-    <input class="search-box" placeholder="🔍 Rechercher une ville..." oninput="filtrerVilles(this.value)">
-  </div>
-  <div class="ville-list" id="liste-villes"></div>
-</div>
-
-<!-- ═══════════════════════════
-     PAGE URGENCES
-════════════════════════════ -->
-<div class="page" id="page-urgences" style="display:none;">
-  <div class="app-header">
-    <div class="header-top">
-      <button onclick="afficherPage('page-home')" style="background:none;border:none;color:white;font-size:28px;cursor:pointer;line-height:1;">‹</button>
-      <div class="header-logo">Pharma<em>Garde</em></div>
-      <div style="width:28px;"></div>
-    </div>
-  </div>
-  <div class="scroll-area">
-    <div class="section-label">Numéros d'urgence · Togo</div>
-    <div id="urgences-page"></div>
-  </div>
-  <div class="bottom-nav">
-    <button class="nav-btn" onclick="afficherPage('page-home')">
-      <span class="nav-icon">💊</span>
-      <span class="nav-label">Pharmacies</span>
-      <div class="nav-pip"></div>
-    </button>
-    <button class="nav-btn on" id="nav-urgences2">
-      <span class="nav-icon">🚨</span>
-      <span class="nav-label">Urgences</span>
-      <div class="nav-pip"></div>
-    </button>
-  <button class="nav-btn" id="nav-contact" onclick="afficherPage('page-contact')">
-  <span class="nav-icon" style="color:#25D366;">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="#25D366">
-      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-    </svg>
-  </span>
-  <span class="nav-label">Contact</span>
-  <div class="nav-pip"></div>
-</button>
-  </div>
-</div>
-
-<!-- ═══════════════════════════
-     PAGE CONTACT
-════════════════════════════ -->
-<div class="page" id="page-contact" style="display:none;">
-  <div class="contact-hero">
-    <div class="header-top" style="margin-bottom:16px;">
-      <button onclick="afficherPage('page-home')" style="background:none;border:none;color:white;font-size:28px;cursor:pointer;line-height:1;">‹</button>
-      <div class="header-logo">Pharma<em>Garde</em></div>
-      <div style="width:28px;"></div>
-    </div>
-    <div class="contact-title">Nous écrire 💬</div>
-    <div class="contact-sub">Pharmacie manquante ? Erreur ? Signalez-le.</div>
-  </div>
-  <div class="contact-body">
-    <label class="form-label">Votre numéro WhatsApp</label>
-    <input class="form-input" id="input-tel" type="tel" placeholder="+228 XX XX XX XX">
-    <label class="form-label">Votre ville</label>
-    <input class="form-input" id="input-ville" placeholder="Ex: Lomé, Kara, Sokodé...">
-    <label class="form-label">Votre message</label>
-    <textarea class="form-input" id="input-message" placeholder="Ex: La pharmacie X est de garde ce soir mais n'apparaît pas..."></textarea>
-    <button class="wa-btn" onclick="envoyerWhatsApp()">💬 Envoyer via WhatsApp</button>
-    <div style="text-align:center;color:#5A7A68;font-size:12px;margin-top:12px;">Réponse sous 24h · Vos données restent privées</div>
-  </div>
-  <div class="bottom-nav">
-    <button class="nav-btn" onclick="afficherPage('page-home')">
-      <span class="nav-icon">💊</span>
-      <span class="nav-label">Pharmacies</span>
-      <div class="nav-pip"></div>
-    </button>
-    <button class="nav-btn" onclick="afficherPage('page-urgences')">
-      <span class="nav-icon">🚨</span>
-      <span class="nav-label">Urgences</span>
-      <div class="nav-pip"></div>
-    </button>
-    <button class="nav-btn on" id="nav-contact2">
-      <span class="nav-icon">✉️</span>
+    <button class="nav-btn" id="nav-contact" onclick="afficherPage('page-contact', true)">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      </span>
       <span class="nav-label">Contact</span>
-      <div class="nav-pip"></div>
-    </button>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="app.js"></script>
-</body>
-</html>
+      <div class
