@@ -171,6 +171,22 @@ window.onload = function () {
   // Remplir les urgences (page home)
   document.getElementById('urgences-home').innerHTML = afficherUrgences();
 
+  // Remplir les urgences (page urgences complète)
+  document.getElementById('urgences-page').innerHTML = urgences.map(u => `
+    <a href="tel:${u.numero}" class="urg-full" style="text-decoration:none;">
+      <div class="urg-full-icon" style="background:${
+        u.couleur==='r'?'#FFF0EE':u.couleur==='b'?'#EEF4FF':u.couleur==='o'?'#FFF8EE':'#F0FFF8'
+      };">${u.emoji}</div>
+      <div class="urg-full-info">
+        <div class="urg-full-name">${u.nom}</div>
+        <div class="urg-full-sub">Appuyez pour appeler</div>
+      </div>
+      <div class="urg-full-num" style="color:${
+        u.couleur==='r'?'#FF3B30':u.couleur==='b'?'#0A84FF':u.couleur==='o'?'#FF9500':'#006B3C'
+      };">${u.numero}</div>
+    </a>
+  `).join('');
+
   // Remplir les villes
   document.getElementById('liste-villes').innerHTML = afficherVilles();
 
