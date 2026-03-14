@@ -18,7 +18,7 @@ const urgences = [
 // ═══════════════════════════════════════
 // VILLES DU TOGO
 // ═══════════════════════════════════════
-const villes = [
+const toutesVilles = [
   { nom: "Lomé", emoji: "🏙️", zones: "12 zones" },
   { nom: "Kpalimé", emoji: "🌳", zones: "3 pharmacies" },
   { nom: "Kara", emoji: "⛰️", zones: "4 pharmacies" },
@@ -29,35 +29,27 @@ const villes = [
 ];
 
 // ═══════════════════════════════════════
-// VILLE ET ONGLET ACTIFS
+// ÉTAT
 // ═══════════════════════════════════════
 let villeActive = 'Lomé';
 let ongletActif = 'soir';
 
 // ═══════════════════════════════════════
-// CHARGER LES PHARMACIES DEPUIS SUPABASE
+// CHARGER LES PHARMACIES
 // ═══════════════════════════════════════
 async function chargerPharmacies(garde, ville) {
   try {
     let query = db.from('pharmacies').select('*').eq('actif', true);
-
     if (ville) query = query.eq('ville', ville);
-
     const { data, error } = await query;
-
-    if (error) {
-      console.error('Erreur Supabase:', error);
-      return [];
-    }
-
-    // Filtrer par garde
+    if (error) throw error;
+    if (!data || data.length === 0) return [];
     if (garde === 'soir' || garde === 'nuit') {
       return data.filter(p => p.garde === garde || p.garde === '24h/24');
     }
-
     return data;
   } catch (e) {
-    console.error('Erreur:', e);
+    console.error('Erreur Supabase:', e);
     return [];
   }
 }
@@ -66,50 +58,35 @@ async function chargerPharmacies(garde, ville) {
 // AFFICHER UNE PHARMACIE
 // ═══════════════════════════════════════
 function afficherPharmacie(p) {
-  const nom = p.nom || '';
-  const adresse = p.adresse || '';
-  const tel = p.tel || '';
-  const telAffiche = p.tel_affiche || tel;
-  const garde = p.garde || 'soir';
-  const heures = p.heures || '';
-  const assurancesRaw = p.assurances || '';
-  const assurances = assurancesRaw.split(',').filter(a => a.trim() !== '');
-
-  const chipClass = garde === '24h/24' ? 'h24' : 'soir';
-  const chipLabel = garde === '24h/24' ? '🌛 24h/24' : '🌆 Ce soir';
-
-  const heuresHtml = heures && heures !== '24h/24'
-    ? `<div class="meta-row"><span>🕐</span> ${heures}</div>`
-    : '';
-
-  const assurancesHtml = assurances
-    .map(a => `<span class="assur-tag">${a.trim()}</span>`)
-    .join('');
+  const assurances = (p.assurances || '').split(',').filter(a => a.trim());
+  const heuresHtml = p.heures && p.heures !== '24h/24'
+    ? `<div class="meta-row"><span>🕐</span> ${p.heures}</div>` : '';
+  const chipClass = p.garde === '24h/24' ? 'h24' : 'soir';
+  const chipLabel = p.garde === '24h/24' ? '🌛 24h/24' : '🌆 Ce soir';
+  const assurancesHtml = assurances.map(a => `<span class="assur-tag">${a.trim()}</span>`).join('');
 
   return `
-    <div class="pharm-card ${garde === '24h/24' ? 'h24' : ''}">
+    <div class="pharm-card ${p.garde === '24h/24' ? 'h24' : ''}">
       <div class="card-head">
-        <div class="pharm-name">${nom}</div>
+        <div class="pharm-name">${p.nom}</div>
         <div class="garde-chip ${chipClass}">${chipLabel}</div>
       </div>
       <div class="card-meta">
-        <div class="meta-row"><span>📍</span> ${adresse}</div>
-        <div class="meta-row"><span>📞</span> ${telAffiche}</div>
+        <div class="meta-row"><span>📍</span> ${p.adresse}</div>
+        <div class="meta-row"><span>📞</span> ${p.tel_affiche || p.tel}</div>
         ${heuresHtml}
         <div class="assurance-row">${assurancesHtml}</div>
       </div>
       <div class="card-actions">
-        <a href="tel:${tel}" class="btn-call">📞 Appeler maintenant</a>
-        <a href="https://wa.me/${tel.replace('+', '')}" target="_blank" class="btn-icon" title="WhatsApp">💬</a>
-        <a href="https://maps.google.com/?q=${encodeURIComponent(nom + ' ' + adresse + ' Togo')}"
-           target="_blank" class="btn-icon" title="Carte">🗺️</a>
+        <a href="tel:${p.tel}" class="btn-call">📞 Appeler maintenant</a>
+        <a href="https://wa.me/${(p.tel||'').replace('+','')}" target="_blank" class="btn-icon">💬</a>
+        <a href="https://maps.google.com/?q=${encodeURIComponent(p.nom+' '+p.adresse+' Togo')}" target="_blank" class="btn-icon">🗺️</a>
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
 // ═══════════════════════════════════════
-// AFFICHER LES URGENCES (grille home)
+// AFFICHER URGENCES HOME
 // ═══════════════════════════════════════
 function afficherUrgencesHome() {
   return urgences.map(u => `
@@ -117,41 +94,50 @@ function afficherUrgencesHome() {
       <div class="urg-emoji">${u.emoji}</div>
       <div class="urg-name">${u.nom}</div>
       <div class="urg-num">${u.numeroAffiche}</div>
-    </a>
-  `).join('');
+    </a>`).join('');
 }
 
 // ═══════════════════════════════════════
-// AFFICHER LES URGENCES (page complète)
+// AFFICHER URGENCES PAGE
 // ═══════════════════════════════════════
 function afficherUrgencesPage() {
-  const couleurs = { r: '#FFF0EE', b: '#EEF4FF', o: '#FFF8EE', g: '#F0FFF8' };
-  const textCouleurs = { r: '#FF3B30', b: '#0A84FF', o: '#FF9500', g: '#006B3C' };
-
+  const bg = { r:'#FFF0EE', b:'#EEF4FF', o:'#FFF8EE', g:'#F0FFF8' };
+  const tc = { r:'#FF3B30', b:'#0A84FF', o:'#FF9500', g:'#006B3C' };
   return urgences.map(u => `
     <a href="tel:${u.numero}" class="urg-full" style="text-decoration:none;">
-      <div class="urg-full-icon" style="background:${couleurs[u.couleur]};">${u.emoji}</div>
+      <div class="urg-full-icon" style="background:${bg[u.couleur]};">${u.emoji}</div>
       <div class="urg-full-info">
         <div class="urg-full-name">${u.nom}</div>
         <div class="urg-full-sub">Appuyez pour appeler</div>
       </div>
-      <div class="urg-full-num" style="color:${textCouleurs[u.couleur]};">${u.numeroAffiche}</div>
-    </a>
-  `).join('');
+      <div class="urg-full-num" style="color:${tc[u.couleur]};">${u.numeroAffiche}</div>
+    </a>`).join('');
 }
 
 // ═══════════════════════════════════════
-// AFFICHER LES VILLES
+// AFFICHER VILLES
 // ═══════════════════════════════════════
-function afficherVilles() {
-  return villes.map(v => `
+function afficherVilles(filtre = '') {
+  const liste = filtre
+    ? toutesVilles.filter(v => v.nom.toLowerCase().includes(filtre.toLowerCase()))
+    : toutesVilles;
+
+  return liste.map(v => `
     <div class="ville-item" onclick="choisirVille('${v.nom}')">
       <span style="font-size:24px">${v.emoji}</span>
-      <span class="ville-name">${v.nom}</span>
-      <span class="ville-count">${v.zones}</span>
-      <span style="color:#5A7A68">›</span>
-    </div>
-  `).join('');
+      <div style="flex:1;">
+        <div class="ville-name">${v.nom}</div>
+        <div class="ville-count">${v.zones}</div>
+      </div>
+      <span style="color:#5A7A68;font-size:20px;">›</span>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════
+// FILTRER VILLES
+// ═══════════════════════════════════════
+function filtrerVilles(valeur) {
+  document.getElementById('liste-villes').innerHTML = afficherVilles(valeur);
 }
 
 // ═══════════════════════════════════════
@@ -159,42 +145,48 @@ function afficherVilles() {
 // ═══════════════════════════════════════
 async function choisirVille(ville) {
   villeActive = ville;
-  document.getElementById('loc-main').textContent = ville + ' — Sélectionné';
+  document.getElementById('loc-main').textContent = ville + ' — Sélectionné ✓';
   document.getElementById('loc-sub').textContent = 'Appuyez pour changer de ville';
   afficherPage('page-home');
-  await rechargerPharmaciess();
+  await rechargerPharmacies();
 }
 
 // ═══════════════════════════════════════
-// RECHARGER LES PHARMACIES
+// RECHARGER PHARMACIES
 // ═══════════════════════════════════════
-async function rechargerPharmaciess() {
+async function rechargerPharmacies() {
   document.getElementById('liste-pharmacies').innerHTML =
-    '<div style="text-align:center;padding:40px;color:#5A7A68;">Chargement...</div>';
+    `<div style="text-align:center;padding:48px 20px;color:#5A7A68;">
+      <div style="font-size:32px;margin-bottom:12px;">⏳</div>
+      Chargement en cours...
+    </div>`;
 
   const data = await chargerPharmacies(ongletActif, villeActive);
 
-  if (data.length === 0) {
+  if (!data || data.length === 0) {
     document.getElementById('liste-pharmacies').innerHTML =
-      '<div style="text-align:center;padding:40px;color:#5A7A68;">Aucune pharmacie trouvée pour cette zone.</div>';
+      `<div style="text-align:center;padding:48px 20px;color:#5A7A68;">
+        <div style="font-size:48px;margin-bottom:12px;">🔍</div>
+        <div style="font-weight:700;margin-bottom:6px;">Aucune pharmacie trouvée</div>
+        <div style="font-size:13px;">pour ${villeActive} · ${ongletActif}</div>
+      </div>`;
     document.getElementById('count-badge').textContent = '0 trouvée';
     return;
   }
 
-  document.getElementById('liste-pharmacies').innerHTML =
-    data.map(afficherPharmacie).join('');
+  document.getElementById('liste-pharmacies').innerHTML = data.map(afficherPharmacie).join('');
   document.getElementById('count-badge').textContent =
     data.length + ' trouvée' + (data.length > 1 ? 's' : '');
 }
 
 // ═══════════════════════════════════════
-// CHANGER D'ONGLET
+// CHANGER ONGLET
 // ═══════════════════════════════════════
 async function changerOnglet(onglet) {
   ongletActif = onglet;
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
   document.getElementById('tab-' + onglet).classList.add('on');
-  await rechargerPharmaciess();
+  await rechargerPharmacies();
 }
 
 // ═══════════════════════════════════════
@@ -204,35 +196,27 @@ function afficherPage(pageId) {
   document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
   document.getElementById(pageId).style.display = 'block';
   window.scrollTo(0, 0);
-
-  document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('on'));
-  if (pageId === 'page-home') document.getElementById('nav-home').classList.add('on');
-  if (pageId === 'page-urgences') document.getElementById('nav-urgences').classList.add('on');
-  if (pageId === 'page-contact') document.getElementById('nav-contact').classList.add('on');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('on'));
+  const map = { 'page-home': 'nav-home', 'page-urgences': 'nav-urgences', 'page-contact': 'nav-contact' };
+  if (map[pageId]) document.getElementById(map[pageId]).classList.add('on');
 }
 
 // ═══════════════════════════════════════
-// WHATSAPP CONTACT
+// WHATSAPP
 // ═══════════════════════════════════════
 function envoyerWhatsApp() {
   const numero = document.getElementById('input-tel').value;
   const ville = document.getElementById('input-ville').value;
   const message = document.getElementById('input-message').value;
-
-  if (!message.trim()) {
-    alert('Veuillez écrire un message.');
-    return;
-  }
-
+  if (!message.trim()) { alert('Veuillez écrire un message.'); return; }
   const texte = `Bonjour PharmaGarde Togo 👋\n\nVille: ${ville}\nNuméro: ${numero}\n\nMessage: ${message}`;
   window.open(`https://wa.me/22800000000?text=${encodeURIComponent(texte)}`, '_blank');
 }
 
 // ═══════════════════════════════════════
-// INSTALLATION PWA
+// PWA INSTALLATION
 // ═══════════════════════════════════════
 let deferredPrompt;
-
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
@@ -255,21 +239,19 @@ function installerApp() {
 // INITIALISATION
 // ═══════════════════════════════════════
 window.onload = async function () {
-  // Urgences
   document.getElementById('urgences-home').innerHTML = afficherUrgencesHome();
   document.getElementById('urgences-page').innerHTML = afficherUrgencesPage();
-
-  // Villes
   document.getElementById('liste-villes').innerHTML = afficherVilles();
 
-  // Charger les pharmacies
-  await rechargerPharmaciess();
+  await rechargerPharmacies();
 
-  // GPS
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(function () {
-      document.getElementById('loc-main').textContent = 'Lomé — Position détectée';
+      document.getElementById('loc-main').textContent = 'Lomé — Position détectée ✓';
       document.getElementById('loc-sub').textContent = 'GPS actif · Appuyez pour changer';
+    }, function() {
+      document.getElementById('loc-main').textContent = 'Lomé';
+      document.getElementById('loc-sub').textContent = 'Appuyez pour changer de ville';
     });
   }
 };
