@@ -181,37 +181,29 @@ function calculerDistance(lat1, lng1, lat2, lng2) {
 function trouverPlusProche(pharmacies) {
   if (!pharmacies.length) return null;
 
-  // Si GPS disponible, calculer vraie distance
   if (userLat && userLng) {
-    const coordsVille = coordsVilles[villeActive];
-    if (coordsVille) {
-      // Ajouter des coordonnées approximatives par zone
-      const offsetsZones = {
-        'A': { lat: 0.000, lng: 0.000 },
-        'B': { lat: 0.015, lng: -0.010 },
-        'C': { lat: 0.020, lng: 0.005 },
-        'D': { lat: 0.025, lng: 0.015 },
-        'E': { lat: -0.015, lng: -0.020 },
-        'F': { lat: -0.030, lng: -0.015 },
-      };
+    let plusProche = null;
+    let distMin = Infinity;
 
-      let plusProche = null;
-      let distMin = Infinity;
+    pharmacies.forEach(p => {
+      // Utiliser les vraies coordonnées si disponibles
+      const pLat = p.latitude || (coordsVilles[p.ville]?.lat);
+      const pLng = p.longitude || (coordsVilles[p.ville]?.lng);
 
-      pharmacies.forEach(p => {
-        const offset = offsetsZones[p.zone] || { lat: 0, lng: 0 };
-        const pLat = coordsVille.lat + offset.lat;
-        const pLng = coordsVille.lng + offset.lng;
-        const dist = calculerDistance(userLat, userLng, pLat, pLng);
-        if (dist < distMin) {
-          distMin = dist;
-          plusProche = { ...p, distanceKm: dist, pLat, pLng };
-        }
-      });
+      if (!pLat || !pLng) return;
 
-      return plusProche;
-    }
+      const dist = calculerDistance(userLat, userLng, pLat, pLng);
+      if (dist < distMin) {
+        distMin = dist;
+        plusProche = { ...p, distanceKm: dist, pLat, pLng };
+      }
+    });
+
+    return plusProche || pharmacies[0];
   }
+
+  return pharmacies.find(p => p.garde === '24h/24') || pharmacies[0];
+}
 
   // Fallback : pharmacie 24h ou première
   return pharmacies.find(p => p.garde === '24h/24') || pharmacies[0];
@@ -282,11 +274,8 @@ function ouvrirPopup(p) {
   const chipClass = p.garde === '24h/24' ? 'h24' : 'soir';
   const chipLabel = p.garde === '24h/24' ? '🌛 Ouvert 24h/24' : '🌆 De garde ce soir';
   const coords = coordsVilles[p.ville] || coordsVilles['Lomé'];
-  const offsetsZones = { 'A':{lat:0,lng:0}, 'B':{lat:0.015,lng:-0.010}, 'C':{lat:0.020,lng:0.005}, 'D':{lat:0.025,lng:0.015}, 'E':{lat:-0.015,lng:-0.020}, 'F':{lat:-0.030,lng:-0.015} };
-  const offset = offsetsZones[p.zone] || { lat: 0, lng: 0 };
-  const pharmLat = p.pLat || (coords.lat + offset.lat);
-  const pharmLng = p.pLng || (coords.lng + offset.lng);
-
+  const pharmLat = p.latitude || p.pLat || coords.lat;
+const pharmLng = p.longitude || p.pLng || coords.lng;
   document.getElementById('popup-content').innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
       <div style="flex:1;padding-right:12px;">
@@ -459,11 +448,14 @@ function afficherPharmacie(p) {
 
   // Calculer distance si GPS dispo
   let distHtml = '';
-  if (userLat && userLng && p.distanceKm !== undefined) {
-    const d = p.distanceKm;
+  if (userLat && userLng) {
+  const pLat = p.latitude || p.pLat || coordsVilles[p.ville]?.lat;
+  const pLng = p.longitude || p.pLng || coordsVilles[p.ville]?.lng;
+  if (pLat && pLng) {
+    const d = p.distanceKm !== undefined ? p.distanceKm : calculerDistance(userLat, userLng, pLat, pLng);
     distHtml = `<div class="meta-row"><span>📏</span>${d < 1 ? Math.round(d*1000)+' m' : d.toFixed(1)+' km'} de vous</div>`;
   }
-
+}
   const pData = JSON.stringify(p).replace(/"/g, '&quot;');
 
   return `
