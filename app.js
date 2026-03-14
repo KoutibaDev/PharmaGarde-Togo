@@ -90,11 +90,12 @@ function ouvrirPopup(p) {
   const assurances = (p.assurances || '').split(',').filter(a => a.trim());
   const assurancesHtml = assurances.length
     ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">${assurances.map(a => `<span class="assur-tag">${a.trim()}</span>`).join('')}</div>`
-    : '<span style="color:#5A7A68;font-size:12px;">Aucune assurance précisée</span>';
+    : '<span style="color:#5A7A68;font-size:12px;">Aucune précisée</span>';
 
   const telPropre = (p.tel || '').replace(/\s/g, '');
   const chipClass = p.garde === '24h/24' ? 'h24' : 'soir';
   const chipLabel = p.garde === '24h/24' ? '🌛 24h/24' : '🌆 Ce soir';
+  const coords = coordsVilles[p.ville] || coordsVilles['Lomé'];
 
   document.getElementById('popup-content').innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
@@ -116,30 +117,168 @@ function ouvrirPopup(p) {
       ${assurancesHtml}
     </div>
 
-    <div style="display:flex;gap:10px;">
+    <!-- Carte intégrée -->
+    <div style="border-radius:16px;overflow:hidden;margin-bottom:16px;border:1.5px solid var(--border);">
+      <div id="popup-map" style="height:200px;width:100%;"></div>
+    </div>
+
+    <!-- Boutons itinéraire -->
+    <div style="display:flex;gap:10px;margin-bottom:12px;">
+      <button onclick="lancerItineraire('${p.nom}', '${p.adresse || ''}', '${p.ville}')" 
+        style="flex:1;background:var(--g1);color:white;border:none;border-radius:14px;padding:14px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+        🧭 Itinéraire
+      </button>
       ${telPropre ? `
-        <a href="tel:${telPropre}" style="flex:1;background:var(--g1);color:white;border:none;border-radius:14px;padding:14px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;">
+        <a href="tel:${telPropre}" style="flex:1;background:#EEF4FF;color:#0A84FF;border:none;border-radius:14px;padding:14px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;">
           📞 Appeler
         </a>
-        <a href="https://wa.me/${telPropre.replace('+','')}" target="_blank" style="background:#25D366;color:white;border:none;border-radius:14px;padding:14px 18px;font-size:18px;text-decoration:none;display:flex;align-items:center;justify-content:center;">
-          💬
-        </a>
       ` : ''}
-      <a href="https://maps.google.com/?q=${encodeURIComponent((p.nom||'')+' '+(p.adresse||'')+' Togo')}" target="_blank" style="background:var(--bg);border:1.5px solid var(--border);border-radius:14px;padding:14px 18px;font-size:18px;text-decoration:none;display:flex;align-items:center;justify-content:center;">
-        🗺️
-      </a>
     </div>
+
+    ${telPropre ? `
+      <a href="https://wa.me/${telPropre.replace('+','')}" target="_blank"
+        style="width:100%;background:#25D366;color:white;border:none;border-radius:14px;padding:14px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;">
+        💬 Contacter sur WhatsApp
+      </a>
+    ` : ''}
   `;
 
   document.getElementById('popup-overlay').style.display = 'block';
   document.getElementById('popup-pharmacie').style.display = 'block';
+
+  // Initialiser la carte du popup
+  setTimeout(() => {
+    const popupMap = L.map('popup-map', { zoomControl: false, dragging: false }).setView([coords.lat, coords.lng], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(popupMap);
+
+    // Marqueur pharmacie
+    const iconPharmacie = L.divIcon({
+      html: '<div style="background:#006B3C;color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.3);">💊</div>',
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+      className: ''
+    });
+
+    L.marker([coords.lat, coords.lng], { icon: iconPharmacie })
+      .addTo(popupMap)
+      .bindPopup(`<b>${p.nom}</b><br>${p.adresse || ''}`).openPopup();
+
+    // Marqueur utilisateur si GPS disponible
+    if (userLat && userLng) {
+      const iconUser = L.divIcon({
+        html: '<div style="background:#0A84FF;color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,0.3);">📍</div>',
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
+        className: ''
+      });
+      L.marker([userLat, userLng], { icon: iconUser }).addTo(popupMap).bindPopup('Vous êtes ici');
+
+      // Tracer ligne entre user et pharmacie
+      L.polyline([[userLat, userLng], [coords.lat, coords.lng]], {
+        color: '#006B3C',
+        weight: 3,
+        dashArray: '8, 8',
+        opacity: 0.8
+      }).addTo(popupMap);
+
+      // Ajuster vue pour voir les deux points
+      popupMap.fitBounds([[userLat, userLng], [coords.lat, coords.lng]], { padding: [20, 20] });
+    }
+  }, 200);
 }
 
-function fermerPopup() {
-  document.getElementById('popup-overlay').style.display = 'none';
-  document.getElementById('popup-pharmacie').style.display = 'none';
-}
+// ═══════════════════════════════════════
+// ITINÉRAIRE DANS L'APP
+// ═══════════════════════════════════════
+function lancerItineraire(nom, adresse, ville) {
+  const coords = coordsVilles[ville] || coordsVilles['Lomé'];
 
+  // Créer une page itinéraire
+  document.getElementById('popup-content').innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <button onclick="fermerPopup()" style="background:var(--bg);border:none;width:36px;height:36px;border-radius:50%;font-size:20px;cursor:pointer;">‹</button>
+      <div>
+        <div style="font-family:'Fraunces',serif;font-size:18px;font-weight:700;">${nom}</div>
+        <div style="font-size:12px;color:var(--sub);">${adresse}</div>
+      </div>
+    </div>
+
+    ${userLat && userLng ? `
+      <div style="background:#EEF4FF;border-radius:14px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;">📍</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#0A84FF;">GPS actif</div>
+          <div style="font-size:11px;color:var(--sub);">Itinéraire calculé depuis votre position</div>
+        </div>
+      </div>
+    ` : `
+      <div style="background:#FFF8EE;border-radius:14px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;">⚠️</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#FF9500;">GPS non activé</div>
+          <div style="font-size:11px;color:var(--sub);">Activez votre GPS pour un meilleur itinéraire</div>
+        </div>
+      </div>
+    `}
+
+    <div id="carte-itineraire" style="height:350px;border-radius:16px;overflow:hidden;border:1.5px solid var(--border);margin-bottom:16px;"></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div style="background:var(--bg);border-radius:12px;padding:14px;text-align:center;">
+        <div style="font-size:22px;font-weight:900;color:var(--g1);" id="distance-val">--</div>
+        <div style="font-size:11px;color:var(--sub);margin-top:2px;">Distance</div>
+      </div>
+      <div style="background:var(--bg);border-radius:12px;padding:14px;text-align:center;">
+        <div style="font-size:22px;font-weight:900;color:var(--g1);" id="temps-val">--</div>
+        <div style="font-size:11px;color:var(--sub);margin-top:2px;">À pied</div>
+      </div>
+    </div>
+  `;
+
+  setTimeout(() => {
+    const carteItin = L.map('carte-itineraire').setView([coords.lat, coords.lng], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(carteItin);
+
+    // Marqueur pharmacie
+    const iconPharmacie = L.divIcon({
+      html: '<div style="background:#006B3C;color:white;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,0.3);">💊</div>',
+      iconSize: [36, 36], iconAnchor: [18, 18], className: ''
+    });
+
+    L.marker([coords.lat, coords.lng], { icon: iconPharmacie })
+      .addTo(carteItin)
+      .bindPopup(`<b>${nom}</b>`).openPopup();
+
+    if (userLat && userLng) {
+      const iconUser = L.divIcon({
+        html: '<div style="background:#0A84FF;color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,0.3);">🧑</div>',
+        iconSize: [32, 32], iconAnchor: [16, 16], className: ''
+      });
+
+      L.marker([userLat, userLng], { icon: iconUser })
+        .addTo(carteItin)
+        .bindPopup('Vous êtes ici');
+
+      // Ligne itinéraire
+      L.polyline([[userLat, userLng], [coords.lat, coords.lng]], {
+        color: '#006B3C', weight: 4, dashArray: '10, 8', opacity: 0.9
+      }).addTo(carteItin);
+
+      carteItin.fitBounds([[userLat, userLng], [coords.lat, coords.lng]], { padding: [30, 30] });
+
+      // Calculer distance et temps
+      const dist = calculerDistance(userLat, userLng, coords.lat, coords.lng);
+      const distAffiche = dist < 1 ? Math.round(dist * 1000) + ' m' : dist.toFixed(1) + ' km';
+      const tempsMin = Math.round(dist * 12); // ~5km/h à pied
+      const tempsAffiche = tempsMin < 60 ? tempsMin + ' min' : Math.floor(tempsMin/60) + 'h' + (tempsMin%60) + 'min';
+
+      document.getElementById('distance-val').textContent = distAffiche;
+      document.getElementById('temps-val').textContent = tempsAffiche;
+    }
+  }, 200);
+}
 // ═══════════════════════════════════════
 // AFFICHER UNE PHARMACIE (carte)
 // ═══════════════════════════════════════
