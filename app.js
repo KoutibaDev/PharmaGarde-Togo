@@ -8,20 +8,20 @@ const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // ═══════════════════════════════════════
 // ÉTAT GLOBAL
 // ═══════════════════════════════════════
-let villeActive = 'Lomé';
-let toutesPharmacies = [];
-let villeToutes = 'Lomé';
-let carteLeaflet = null;
-let userLat = null;
-let userLng = null;
-let deferredPrompt;
-let donneesPharmacies = [];
-let darkMode = false;
+var villeActive = 'Lomé';
+var toutesPharmacies = [];
+var villeToutes = 'Lomé';
+var carteLeaflet = null;
+var userLat = null;
+var userLng = null;
+var deferredPrompt;
+var donneesPharmacies = [];
+var darkMode = false;
 
 // ═══════════════════════════════════════
 // COORDONNÉES DES VILLES
 // ═══════════════════════════════════════
-const coordsVilles = {
+var coordsVilles = {
   'Lomé': { lat: 6.1375, lng: 1.2123 },
   'Kara': { lat: 9.5511, lng: 1.1864 },
   'Kpalimé': { lat: 6.9006, lng: 0.6241 },
@@ -34,7 +34,7 @@ const coordsVilles = {
 // ═══════════════════════════════════════
 // URGENCES
 // ═══════════════════════════════════════
-const urgences = [
+var urgences = [
   { nom: "SAMU", numero: "15", numeroAffiche: "15", emoji: "🚑", couleur: "r" },
   { nom: "Police", numero: "117", numeroAffiche: "117", emoji: "👮", couleur: "b" },
   { nom: "Pompiers", numero: "118", numeroAffiche: "118", emoji: "🚒", couleur: "o" },
@@ -44,7 +44,7 @@ const urgences = [
 // ═══════════════════════════════════════
 // VILLES BASE
 // ═══════════════════════════════════════
-const toutesVillesBase = [
+var toutesVillesBase = [
   { nom: "Lomé", emoji: "🏙️" },
   { nom: "Kpalimé", emoji: "🌳" },
   { nom: "Kara", emoji: "⛰️" },
@@ -76,10 +76,10 @@ function toggleDark() {
   darkMode = !darkMode;
   document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : '');
   var icon = document.getElementById('dark-icon');
-  var label = document.getElementById('dark-label');
-  var toggle = document.getElementById('toggle-switch');
+  var iconMobile = document.getElementById('dark-icon-mobile');
+  var toggle = document.getElementById('toggle-switch-mobile');
   if (icon) icon.textContent = darkMode ? '☀️' : '🌙';
-  if (label) label.textContent = darkMode ? 'Mode clair' : 'Mode sombre';
+  if (iconMobile) iconMobile.textContent = darkMode ? '☀️' : '🌙';
   if (toggle) toggle.classList.toggle('on', darkMode);
   localStorage.setItem('darkMode', darkMode);
 }
@@ -89,10 +89,10 @@ function initDarkMode() {
     darkMode = true;
     document.documentElement.setAttribute('data-theme', 'dark');
     var icon = document.getElementById('dark-icon');
-    var label = document.getElementById('dark-label');
-    var toggle = document.getElementById('toggle-switch');
+    var iconMobile = document.getElementById('dark-icon-mobile');
+    var toggle = document.getElementById('toggle-switch-mobile');
     if (icon) icon.textContent = '☀️';
-    if (label) label.textContent = 'Mode clair';
+    if (iconMobile) iconMobile.textContent = '☀️';
     if (toggle) toggle.classList.add('on');
   }
 }
@@ -110,22 +110,15 @@ function ouvrirMenu() {
 function fermerMenu() {
   document.getElementById('nav-menu').classList.remove('open');
   document.getElementById('nav-overlay').classList.remove('open');
-  document.querySelectorAll('.hamburger').forEach(function(h) {
-    h.classList.remove('open');
-  });
+  document.querySelectorAll('.hamburger').forEach(function(h) { h.classList.remove('open'); });
 }
 
 function naviguerMenu(pageId) {
   fermerMenu();
   setTimeout(function() { afficherPage(pageId, true); }, 200);
-  document.querySelectorAll('.nav-menu-item').forEach(function(i) {
-    i.classList.remove('active');
-  });
+  document.querySelectorAll('.nav-menu-item').forEach(function(i) { i.classList.remove('active'); });
   var map = { 'page-home': 'menu-pharmacies', 'page-urgences': 'menu-urgences', 'page-contact': 'menu-contact' };
-  if (map[pageId]) {
-    var el = document.getElementById(map[pageId]);
-    if (el) el.classList.add('active');
-  }
+  if (map[pageId]) { var el = document.getElementById(map[pageId]); if (el) el.classList.add('active'); }
 }
 
 // ═══════════════════════════════════════
@@ -134,28 +127,34 @@ function naviguerMenu(pageId) {
 function afficherPage(pageId, slideForward) {
   if (slideForward === undefined) slideForward = true;
   document.querySelectorAll('.page').forEach(function(p) {
-    p.classList.remove('active', 'slide-in', 'slide-back');
+    p.classList.remove('active');
   });
   var page = document.getElementById(pageId);
   if (!page) return;
   page.classList.add('active');
-  void page.offsetWidth;
-  page.classList.add(slideForward ? 'slide-in' : 'slide-back');
   window.scrollTo(0, 0);
-  document.querySelectorAll('.nav-btn').forEach(function(b) {
-    b.classList.remove('on');
-  });
-  var navMap = { 'page-home': 'nav-home', 'page-urgences': 'nav-urgences', 'page-contact': 'nav-contact' };
-  if (navMap[pageId]) {
-    var el = document.getElementById(navMap[pageId]);
-    if (el) el.classList.add('on');
-  }
+
+  // Navbar links
+  document.querySelectorAll('.navbar-link').forEach(function(b) { b.classList.remove('active'); });
+  var navMap = { 'page-home': 'nav-home', 'page-toutes': 'nav-toutes', 'page-urgences': 'nav-urgences', 'page-contact': 'nav-contact' };
+  if (navMap[pageId]) { var el = document.getElementById(navMap[pageId]); if (el) el.classList.add('active'); }
+
   if (pageId === 'page-toutes') {
     villeToutes = villeActive;
     var select = document.getElementById('select-ville');
     if (select) select.value = villeActive;
     chargerToutesPharmacies();
   }
+}
+
+// ═══════════════════════════════════════
+// METTRE À JOUR LA VILLE AFFICHÉE
+// ═══════════════════════════════════════
+function mettreAJourVilleAffichee(ville) {
+  var locMain = document.getElementById('loc-main');
+  var locMainHero = document.getElementById('loc-main-hero');
+  if (locMain) locMain.textContent = ville;
+  if (locMainHero) locMainHero.textContent = ville + ' ✓';
 }
 
 // ═══════════════════════════════════════
@@ -207,8 +206,7 @@ function trouverPlusProche(pharmacies) {
     });
     return plusProche || pharmacies[0];
   }
-  var h24 = pharmacies.find(function(p) { return p.garde === '24h/24'; });
-  return h24 || pharmacies[0];
+  return pharmacies.find(function(p) { return p.garde === '24h/24'; }) || pharmacies[0];
 }
 
 function afficherPlusProche(pharmacies) {
@@ -238,7 +236,7 @@ function rechercherPharmacie(terme) {
   });
   document.getElementById('liste-pharmacies').innerHTML = res.length
     ? res.map(function(p) { return afficherPharmacie(p); }).join('')
-    : '<div style="text-align:center;padding:32px;color:var(--sub);"><div style="font-size:36px;margin-bottom:8px;">🔍</div><div style="font-weight:700;">Aucun résultat pour "' + terme + '"</div></div>';
+    : '<div style="text-align:center;padding:48px;color:var(--sub);"><div style="font-size:40px;margin-bottom:12px;">🔍</div><div style="font-weight:700;font-size:16px;">Aucun résultat pour "' + terme + '"</div></div>';
   document.getElementById('count-badge').textContent = res.length + ' résultat' + (res.length > 1 ? 's' : '');
 }
 
@@ -246,7 +244,10 @@ function rechercherPharmacie(terme) {
 // PARTAGE WHATSAPP
 // ═══════════════════════════════════════
 function partagerWhatsApp(p) {
-  var texte = '💊 *' + p.nom + '*\n📍 ' + (p.adresse || '') + ', ' + p.ville + '\n📞 ' + (p.tel_affiche || p.tel || 'Non précisé') + (p.assurances ? '\n🏥 Assurances: ' + p.assurances : '') + '\n\n_Trouvé sur PharmaGarde Togo_ 🇹🇬\n👉 pharma-garde-togo.vercel.app';
+  var texte = '💊 *' + p.nom + '*\n📍 ' + (p.adresse || '') + ', ' + p.ville +
+    '\n📞 ' + (p.tel_affiche || p.tel || 'Non précisé') +
+    (p.assurances ? '\n🏥 Assurances: ' + p.assurances : '') +
+    '\n\n_Trouvé sur PharmaGarde Togo_ 🇹🇬\n👉 pharma-garde-togo.vercel.app';
   window.open('https://wa.me/?text=' + encodeURIComponent(texte), '_blank');
 }
 
@@ -254,7 +255,7 @@ function partagerWhatsApp(p) {
 // SIGNALER ERREUR
 // ═══════════════════════════════════════
 function signalerErreur(nom) {
-  var texte = 'Bonjour PharmaGarde 👋\n\nJe souhaite signaler une erreur concernant :\n*' + nom + '*\n\nDétails : ';
+  var texte = 'Bonjour PharmaGarde 👋\n\nErreur concernant :\n*' + nom + '*\n\nDétails : ';
   window.open('https://wa.me/22879538131?text=' + encodeURIComponent(texte), '_blank');
 }
 
@@ -321,9 +322,7 @@ function ouvrirPopup(p) {
         iconSize: [26,26], iconAnchor: [13,13], className: ''
       });
       L.marker([userLat, userLng], { icon: iconU }).addTo(popupMap);
-      L.polyline([[userLat, userLng], [pharmLat, pharmLng]], {
-        color: '#004D2A', weight: 2, dashArray: '6,6', opacity: 0.6
-      }).addTo(popupMap);
+      L.polyline([[userLat, userLng], [pharmLat, pharmLng]], { color: '#004D2A', weight: 2, dashArray: '6,6', opacity: 0.6 }).addTo(popupMap);
       popupMap.fitBounds([[userLat, userLng], [pharmLat, pharmLng]], { padding: [24,24] });
     }
   }, 250);
@@ -349,7 +348,7 @@ function lancerItineraire(nom, adresse, ville, pharmLat, pharmLng) {
       '<div style="font-size:12px;color:var(--sub);">' + (adresse || '') + ' · ' + ville + '</div></div>' +
     '</div>' +
     (userLat && userLng
-      ? '<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;"><span style="font-size:20px;">📍</span><div><div style="font-size:13px;font-weight:700;color:#1D4ED8;">GPS actif</div><div style="font-size:11px;color:var(--sub);">Itinéraire calculé depuis votre position</div></div></div>'
+      ? '<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;"><span style="font-size:20px;">📍</span><div><div style="font-size:13px;font-weight:700;color:#1D4ED8;">GPS actif</div><div style="font-size:11px;color:var(--sub);">Itinéraire depuis votre position</div></div></div>'
       : '<div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;"><span style="font-size:20px;">⚠️</span><div><div style="font-size:13px;font-weight:700;color:#D97706;">GPS non activé</div><div style="font-size:11px;color:var(--sub);">Activez votre GPS pour un itinéraire précis</div></div></div>') +
     '<div id="carte-itineraire" style="height:300px;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border);margin-bottom:14px;"></div>' +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">' +
@@ -391,24 +390,22 @@ function afficherPharmacie(p) {
   var assurancesHtml = assurances.map(function(a) { return '<span class="assur-tag">' + a.trim() + '</span>'; }).join('');
   var tel = (p.tel || '').replace(/\s/g, '');
   var badgeProche = p._plusProche ? '<span class="badge-proche">📍 La plus proche</span>' : '';
+  var pharmLat = p.latitude || p.pLat || (coordsVilles[p.ville] ? coordsVilles[p.ville].lat : 6.1375);
+  var pharmLng = p.longitude || p.pLng || (coordsVilles[p.ville] ? coordsVilles[p.ville].lng : 1.2123);
 
   var distHtml = '';
   if (userLat && userLng) {
-    var pLat = p.latitude || p.pLat || (coordsVilles[p.ville] ? coordsVilles[p.ville].lat : null);
-    var pLng = p.longitude || p.pLng || (coordsVilles[p.ville] ? coordsVilles[p.ville].lng : null);
-    if (pLat && pLng) {
-      var d = p.distanceKm !== undefined ? p.distanceKm : calculerDistance(userLat, userLng, pLat, pLng);
-      distHtml = '<div class="meta-row"><span>📏</span>' + (d < 1 ? Math.round(d*1000)+' m' : d.toFixed(1)+' km') + ' de vous</div>';
-    }
+    var d = p.distanceKm !== undefined ? p.distanceKm : calculerDistance(userLat, userLng, pharmLat, pharmLng);
+    distHtml = '<div class="meta-row"><span>📏</span>' + (d < 1 ? Math.round(d*1000)+' m' : d.toFixed(1)+' km') + ' de vous</div>';
   }
 
   var pData = JSON.stringify(p).replace(/"/g, '&quot;');
   var nomEscape = p.nom.replace(/'/g, "\\'");
   var adresseEscape = (p.adresse || '').replace(/'/g, "\\'");
-  var pharmLat = p.latitude || p.pLat || (coordsVilles[p.ville] ? coordsVilles[p.ville].lat : 6.1375);
-  var pharmLng = p.longitude || p.pLng || (coordsVilles[p.ville] ? coordsVilles[p.ville].lng : 1.2123);
 
-  return '<div class="pharm-card ' + (p.garde === '24h/24' ? 'h24' : '') + '" onclick="ouvrirPopup(JSON.parse(this.dataset.p.replace(/&quot;/g,\'\\\"\')))" data-p="' + pData + '">' +
+  return '<div class="pharm-card ' + (p.garde === '24h/24' ? 'h24' : '') +
+    '" onclick="ouvrirPopup(JSON.parse(this.dataset.p.replace(/&quot;/g,\'\\\"\')))' +
+    '" data-p="' + pData + '">' +
     '<div class="card-head">' +
       '<div class="pharm-name">' + p.nom + badgeProche + '</div>' +
       '<div class="garde-chip ' + chipClass + '">' + chipLabel + '</div>' +
@@ -421,7 +418,7 @@ function afficherPharmacie(p) {
     '</div>' +
     '<div class="card-actions">' +
       (tel ? '<a href="tel:' + tel + '" class="btn-call" onclick="event.stopPropagation()">📞 Appeler</a>' : '<div class="btn-call" style="background:#9CA3AF;cursor:not-allowed;">Non précisé</div>') +
-      (tel ? '<a href="https://wa.me/' + tel.replace('+','') + '" target="_blank" class="btn-icon" onclick="event.stopPropagation()" title="WhatsApp">💬</a>' : '') +
+      (tel ? '<a href="https://wa.me/' + tel.replace('+','') + '" target="_blank" class="btn-icon" onclick="event.stopPropagation()">💬</a>' : '') +
       '<div class="btn-icon" title="Partager" onclick="event.stopPropagation();partagerWhatsApp(JSON.parse(this.closest(\'[data-p]\').dataset.p.replace(/&quot;/g,\'\\\"\')))">📤</div>' +
       '<div class="btn-icon" title="Itinéraire" onclick="event.stopPropagation();lancerItineraire(\'' + nomEscape + '\',\'' + adresseEscape + '\',\'' + p.ville + '\',' + pharmLat + ',' + pharmLng + ');document.getElementById(\'popup-overlay\').style.display=\'block\';document.getElementById(\'popup-pharmacie\').style.display=\'block\';">🧭</div>' +
     '</div>' +
@@ -433,12 +430,12 @@ function afficherPharmacie(p) {
 // ═══════════════════════════════════════
 async function rechargerPharmacies() {
   document.getElementById('liste-pharmacies').innerHTML =
-    '<div style="text-align:center;padding:40px;color:var(--sub);"><div style="font-size:32px;margin-bottom:12px;">⏳</div><div style="font-weight:600;">Chargement...</div></div>';
+    '<div style="text-align:center;padding:48px;color:var(--sub);"><div style="font-size:32px;margin-bottom:12px;">⏳</div><div style="font-weight:600;">Chargement...</div></div>';
   var data = await chargerPharmacies(villeActive);
   donneesPharmacies = data;
   if (!data.length) {
     document.getElementById('liste-pharmacies').innerHTML =
-      '<div style="text-align:center;padding:40px;color:var(--sub);"><div style="font-size:40px;margin-bottom:12px;">🔍</div><div style="font-weight:700;font-size:16px;">Aucune pharmacie trouvée</div><div style="font-size:13px;margin-top:6px;">pour ' + villeActive + '</div></div>';
+      '<div style="text-align:center;padding:48px;color:var(--sub);"><div style="font-size:40px;margin-bottom:12px;">🔍</div><div style="font-weight:700;">Aucune pharmacie trouvée</div><div style="font-size:13px;margin-top:6px;">pour ' + villeActive + '</div></div>';
     document.getElementById('count-badge').textContent = '0';
     return;
   }
@@ -454,7 +451,7 @@ async function rechargerPharmacies() {
 // ═══════════════════════════════════════
 async function chargerToutesPharmacies() {
   document.getElementById('liste-toutes').innerHTML =
-    '<div style="text-align:center;padding:40px;color:var(--sub);"><div style="font-size:32px;margin-bottom:12px;">⏳</div><div>Chargement...</div></div>';
+    '<div style="text-align:center;padding:48px;color:var(--sub);"><div style="font-size:32px;margin-bottom:12px;">⏳</div><div>Chargement...</div></div>';
   toutesPharmacies = await chargerPharmacies(villeToutes);
   document.getElementById('count-toutes').textContent =
     toutesPharmacies.length + ' trouvée' + (toutesPharmacies.length > 1 ? 's' : '');
@@ -474,8 +471,6 @@ async function changerVilleToutes(ville) {
 function initialiserCarte() {
   var coords = coordsVilles[villeToutes] || coordsVilles['Lomé'];
   if (carteLeaflet) { carteLeaflet.remove(); carteLeaflet = null; }
-  var container = document.getElementById('carte-container');
-  if (!container) return;
   setTimeout(function() {
     carteLeaflet = L.map('carte-lome').setView([coords.lat, coords.lng], 12);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(carteLeaflet);
@@ -553,8 +548,7 @@ async function filtrerVilles(valeur) {
 
 async function choisirVille(ville) {
   villeActive = ville;
-  document.getElementById('loc-main').textContent = ville + ' ✓';
-  document.getElementById('loc-sub').textContent = 'Appuyez pour changer de ville';
+  mettreAJourVilleAffichee(ville);
   afficherPage('page-home', false);
   await rechargerPharmacies();
 }
@@ -564,9 +558,9 @@ async function choisirVille(ville) {
 // ═══════════════════════════════════════
 function ouvrirPolitique(type) {
   var contenu = {
-    confidentialite: { titre: '🔒 Politique de confidentialité', texte: '<h3>Collecte de données</h3><p>PharmaGarde Togo ne collecte aucune donnée personnelle sans votre consentement. Votre position GPS est utilisée uniquement pour afficher les pharmacies les plus proches et n\'est jamais stockée.</p><h3>Cookies</h3><p>Nous utilisons uniquement un cookie pour mémoriser votre préférence de mode sombre.</p><h3>Contact</h3><p>Pour toute question : pharmagardetogo@gmail.com</p>' },
-    conditions: { titre: '📄 Conditions d\'utilisation', texte: '<h3>Objet</h3><p>PharmaGarde Togo est un service gratuit d\'information sur les pharmacies de garde au Togo.</p><h3>Exactitude</h3><p>Les données sont mises à jour chaque lundi depuis lacinquieme.tg. Nous recommandons d\'appeler avant de vous déplacer.</p><h3>Responsabilité</h3><p>PharmaGarde Togo ne peut être tenu responsable d\'une pharmacie fermée malgré son affichage.</p>' },
-    cookies: { titre: '🍪 Politique cookies', texte: '<h3>Cookies utilisés</h3><p>Un seul cookie : darkMode (localStorage) pour mémoriser votre préférence de thème.</p><h3>Cookies tiers</h3><p>OpenStreetMap peut déposer des cookies techniques pour l\'affichage des cartes.</p>' }
+    confidentialite: { titre: '🔒 Politique de confidentialité', texte: '<h3>Collecte de données</h3><p>PharmaGarde Togo ne collecte aucune donnée personnelle. Votre GPS est utilisé localement pour afficher les pharmacies proches, jamais stocké.</p><h3>Cookies</h3><p>Un seul cookie localStorage pour mémoriser votre thème sombre/clair.</p><h3>Contact</h3><p>pharmagardetogo@gmail.com</p>' },
+    conditions: { titre: '📄 Conditions d\'utilisation', texte: '<h3>Service gratuit</h3><p>PharmaGarde Togo est un service gratuit d\'information sur les pharmacies de garde.</p><h3>Exactitude</h3><p>Données mises à jour chaque lundi. Appelez avant de vous déplacer.</p><h3>Responsabilité</h3><p>Nous ne pouvons garantir qu\'une pharmacie affichée soit effectivement ouverte.</p>' },
+    cookies: { titre: '🍪 Politique cookies', texte: '<h3>Cookie utilisé</h3><p>darkMode (localStorage) : mémorise votre préférence de thème. Aucun cookie publicitaire.</p><h3>Cookies tiers</h3><p>OpenStreetMap peut déposer des cookies techniques pour les cartes.</p>' }
   };
   var info = contenu[type];
   if (!info) return;
@@ -602,8 +596,8 @@ function afficherPopupInstall() {
   if (document.getElementById('install-popup')) return;
   var popup = document.createElement('div');
   popup.id = 'install-popup';
-  popup.style.cssText = 'position:fixed;bottom:84px;left:50%;transform:translateX(-50%);width:calc(100% - 40px);max-width:420px;background:var(--white);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow-lg);z-index:999;border:1.5px solid var(--g3);';
-  popup.innerHTML = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;"><div style="width:48px;height:48px;background:linear-gradient(135deg,var(--g1),var(--g2));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">💊</div><div style="flex:1;"><div style="font-family:\'Fraunces\',serif;font-size:16px;font-weight:700;color:var(--text);">Installer PharmaGarde</div><div style="font-size:12px;color:var(--sub);margin-top:2px;">Accès rapide depuis l\'écran d\'accueil</div></div><button onclick="this.closest(\'#install-popup\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--sub);">✕</button></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px;"><div style="background:var(--bg);border-radius:var(--radius-sm);padding:10px;text-align:center;"><div style="font-size:20px;">⚡</div><div style="font-size:11px;font-weight:600;color:var(--g1);margin-top:4px;">Rapide</div></div><div style="background:var(--bg);border-radius:var(--radius-sm);padding:10px;text-align:center;"><div style="font-size:20px;">📴</div><div style="font-size:11px;font-weight:600;color:var(--g1);margin-top:4px;">Hors ligne</div></div><div style="background:var(--bg);border-radius:var(--radius-sm);padding:10px;text-align:center;"><div style="font-size:20px;">🆓</div><div style="font-size:11px;font-weight:600;color:var(--g1);margin-top:4px;">Gratuit</div></div></div><button onclick="installerDepuisPopup()" style="width:100%;background:linear-gradient(135deg,var(--g1),var(--g2));color:white;border:none;border-radius:var(--radius);padding:14px;font-family:\'Outfit\',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">📲 Installer maintenant — Gratuit</button>';
+  popup.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);width:calc(100% - 40px);max-width:420px;background:var(--white);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow-lg);z-index:999;border:1.5px solid var(--g3);';
+  popup.innerHTML = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;"><div style="width:48px;height:48px;background:linear-gradient(135deg,var(--g1),var(--g2));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">💊</div><div style="flex:1;"><div style="font-family:\'Fraunces\',serif;font-size:16px;font-weight:700;color:var(--text);">Installer PharmaGarde</div><div style="font-size:12px;color:var(--sub);margin-top:2px;">Accès rapide depuis l\'écran d\'accueil</div></div><button onclick="this.closest(\'#install-popup\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--sub);">✕</button></div><button onclick="installerDepuisPopup()" style="width:100%;background:linear-gradient(135deg,var(--g1),var(--g2));color:white;border:none;border-radius:var(--radius);padding:14px;font-family:\'Outfit\',sans-serif;font-size:14px;font-weight:800;cursor:pointer;">📲 Installer maintenant — Gratuit</button>';
   document.body.appendChild(popup);
 }
 
@@ -625,12 +619,11 @@ function installerDepuisPopup() {
 }
 
 function installerApp() {
-  if (deferredPrompt) {
-    afficherPopupInstall();
-  } else if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+  if (deferredPrompt) { afficherPopupInstall(); }
+  else if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
     var popup = document.createElement('div');
     popup.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:var(--white);border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding:24px;z-index:9999;box-shadow:0 -8px 40px rgba(0,0,0,0.15);';
-    popup.innerHTML = '<div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px;"></div><div style="font-family:\'Fraunces\',serif;font-size:20px;font-weight:700;margin-bottom:6px;color:var(--text);">Installer sur iPhone</div><div style="font-size:13px;color:var(--sub);margin-bottom:20px;">3 étapes simples :</div><div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"><div style="display:flex;align-items:center;gap:12px;background:var(--bg);border-radius:var(--radius);padding:14px;"><div style="width:32px;height:32px;background:var(--g1);border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-weight:800;flex-shrink:0;">1</div><div style="font-size:14px;font-weight:600;color:var(--text);">Appuyez sur 📤 en bas de Safari</div></div><div style="display:flex;align-items:center;gap:12px;background:var(--bg);border-radius:var(--radius);padding:14px;"><div style="width:32px;height:32px;background:var(--g1);border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-weight:800;flex-shrink:0;">2</div><div style="font-size:14px;font-weight:600;color:var(--text);">Faites défiler → "Sur l\'écran d\'accueil"</div></div><div style="display:flex;align-items:center;gap:12px;background:var(--bg);border-radius:var(--radius);padding:14px;"><div style="width:32px;height:32px;background:var(--g1);border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-weight:800;flex-shrink:0;">3</div><div style="font-size:14px;font-weight:600;color:var(--text);">Appuyez sur "Ajouter"</div></div></div><button onclick="this.parentElement.remove()" style="width:100%;background:var(--g1);color:white;border:none;border-radius:var(--radius);padding:14px;font-family:\'Outfit\',sans-serif;font-size:15px;font-weight:700;cursor:pointer;">J\'ai compris ✓</button>';
+    popup.innerHTML = '<div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px;"></div><div style="font-family:\'Fraunces\',serif;font-size:20px;font-weight:700;margin-bottom:16px;color:var(--text);">Installer sur iPhone</div><div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"><div style="display:flex;align-items:center;gap:12px;background:var(--bg);border-radius:var(--radius);padding:14px;"><div style="width:32px;height:32px;background:var(--g1);border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-weight:800;flex-shrink:0;">1</div><div style="font-size:14px;font-weight:600;color:var(--text);">Appuyez sur 📤 en bas de Safari</div></div><div style="display:flex;align-items:center;gap:12px;background:var(--bg);border-radius:var(--radius);padding:14px;"><div style="width:32px;height:32px;background:var(--g1);border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-weight:800;flex-shrink:0;">2</div><div style="font-size:14px;font-weight:600;color:var(--text);">Faites défiler → "Sur l\'écran d\'accueil"</div></div><div style="display:flex;align-items:center;gap:12px;background:var(--bg);border-radius:var(--radius);padding:14px;"><div style="width:32px;height:32px;background:var(--g1);border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-weight:800;flex-shrink:0;">3</div><div style="font-size:14px;font-weight:600;color:var(--text);">Appuyez sur "Ajouter"</div></div></div><button onclick="this.parentElement.remove()" style="width:100%;background:var(--g1);color:white;border:none;border-radius:var(--radius);padding:14px;font-family:\'Outfit\',sans-serif;font-size:15px;font-weight:700;cursor:pointer;">J\'ai compris ✓</button>';
     document.body.appendChild(popup);
   }
 }
@@ -639,46 +632,36 @@ function installerApp() {
 // INITIALISATION
 // ═══════════════════════════════════════
 window.onload = async function() {
-  // Splash en premier
   cacherSplash();
-
-  // Mode sombre
   initDarkMode();
 
-  // Urgences
   document.getElementById('urgences-home').innerHTML = afficherUrgencesHome();
   document.getElementById('urgences-page').innerHTML = afficherUrgencesPage();
-
-  // Villes
   document.getElementById('liste-villes').innerHTML = await afficherVilles();
 
-  // GPS
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       function(pos) {
         userLat = pos.coords.latitude;
         userLng = pos.coords.longitude;
-        document.getElementById('loc-main').textContent = 'Lomé ✓';
-        document.getElementById('loc-sub').textContent = 'GPS actif · Appuyez pour changer';
+        mettreAJourVilleAffichee('Lomé ✓');
+        var sub = document.getElementById('loc-sub');
+        if (sub) sub.textContent = 'GPS actif · Cliquez pour changer';
       },
       function() {
-        document.getElementById('loc-main').textContent = 'Lomé';
-        document.getElementById('loc-sub').textContent = 'Appuyez pour changer de ville';
+        mettreAJourVilleAffichee('Lomé');
       }
     );
   }
 
-  // Pharmacies
   await rechargerPharmacies();
 
-  // Stats
   try {
     var countResult = await db.from('pharmacies').select('*', { count: 'exact', head: true }).eq('actif', true);
     var statEl = document.getElementById('stat-pharmacies');
     if (statEl && countResult.count) statEl.textContent = countResult.count + '+';
   } catch(e) {}
 
-  // Dernière mise à jour
   try {
     var lastResult = await db.from('pharmacies').select('created_at').eq('actif', true).order('created_at', { ascending: false }).limit(1);
     var badge = document.getElementById('update-badge');
