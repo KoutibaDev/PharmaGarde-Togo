@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="PharmaGarde Togo — Trouvez rapidement une pharmacie de garde près de chez vous, partout au Togo.">
-  <title>PharmaGarde Togo</title>
+  <meta name="keywords" content="pharmacie garde Togo, pharmacie Lomé, urgence Togo, pharmacie nuit Togo">
+  <title>PharmaGarde Togo — Pharmacies de garde</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,700;1,9..144,400&display=swap" rel="stylesheet">
@@ -13,9 +14,7 @@
 </head>
 <body>
 
-<!-- ══════════════════════════════
-     SPLASH SCREEN
-══════════════════════════════ -->
+<!-- SPLASH -->
 <div id="splash-screen">
   <div class="splash-icon-wrap">💊</div>
   <div class="splash-logo">Pharma<em>Garde</em></div>
@@ -28,9 +27,7 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════
-     MENU HAMBURGER
-══════════════════════════════ -->
+<!-- MENU MOBILE -->
 <div class="nav-overlay" id="nav-overlay" onclick="fermerMenu()"></div>
 <nav class="nav-menu" id="nav-menu">
   <div class="nav-menu-header">
@@ -86,114 +83,128 @@
   <div class="nav-menu-footer">
     <div class="dark-toggle-row" onclick="toggleDark()">
       <div class="dark-toggle-label">
-        <span id="dark-icon">🌙</span>
-        <span id="dark-label">Mode sombre</span>
+        <span id="dark-icon-mobile">🌙</span>
+        <span>Mode sombre</span>
       </div>
-      <div class="toggle-switch" id="toggle-switch">
+      <div class="toggle-switch" id="toggle-switch-mobile">
         <div class="toggle-knob"></div>
       </div>
     </div>
   </div>
 </nav>
 
-<!-- ══════════════════════════════
-     POPUP PHARMACIE
-══════════════════════════════ -->
+<!-- POPUP PHARMACIE -->
 <div id="popup-overlay" onclick="fermerPopup()"></div>
 <div id="popup-pharmacie">
   <div class="popup-handle"></div>
   <div id="popup-content"></div>
 </div>
 
-<!-- ══════════════════════════════
-     BANNIÈRE (composant réutilisable)
-══════════════════════════════ -->
-<template id="banniere-template">
-  <div class="install-banner" onclick="installerApp()">
-    <div class="banner-track">
-      <span class="banner-item">📲 Installer PharmaGarde sur votre écran d'accueil</span>
-      <span class="banner-dot"></span>
-      <span class="banner-item">💊 Pharmacies de garde partout au Togo</span>
-      <span class="banner-dot"></span>
-      <span class="banner-item">📍 Itinéraire vers la pharmacie la plus proche</span>
-      <span class="banner-dot"></span>
-      <span class="banner-item">🚨 Numéros d'urgence en un clic</span>
-      <span class="banner-dot"></span>
-      <span class="banner-item">🔄 Mis à jour chaque lundi automatiquement</span>
-      <span class="banner-dot"></span>
-      <span class="banner-item">📲 Installer PharmaGarde sur votre écran d'accueil</span>
-      <span class="banner-dot"></span>
-      <span class="banner-item">💊 Pharmacies de garde partout au Togo</span>
-      <span class="banner-dot"></span>
-      <span class="banner-item">📍 Itinéraire vers la pharmacie la plus proche</span>
-      <span class="banner-dot"></span>
-      <span class="banner-item">🚨 Numéros d'urgence en un clic</span>
-      <span class="banner-dot"></span>
-      <span class="banner-item">🔄 Mis à jour chaque lundi automatiquement</span>
-      <span class="banner-dot"></span>
+<!-- BANNIÈRE DÉFILANTE (sur toutes les pages) -->
+<div class="install-banner" onclick="installerApp()">
+  <div class="banner-track">
+    <span class="banner-item">📲 Installer PharmaGarde sur votre écran d'accueil</span>
+    <span class="banner-dot"></span>
+    <span class="banner-item">💊 Pharmacies de garde partout au Togo</span>
+    <span class="banner-dot"></span>
+    <span class="banner-item">📍 Itinéraire vers la pharmacie la plus proche</span>
+    <span class="banner-dot"></span>
+    <span class="banner-item">🚨 Numéros d'urgence en un clic</span>
+    <span class="banner-dot"></span>
+    <span class="banner-item">🔄 Mis à jour chaque lundi automatiquement</span>
+    <span class="banner-dot"></span>
+    <span class="banner-item">📲 Installer PharmaGarde sur votre écran d'accueil</span>
+    <span class="banner-dot"></span>
+    <span class="banner-item">💊 Pharmacies de garde partout au Togo</span>
+    <span class="banner-dot"></span>
+    <span class="banner-item">📍 Itinéraire vers la pharmacie la plus proche</span>
+    <span class="banner-dot"></span>
+    <span class="banner-item">🚨 Numéros d'urgence en un clic</span>
+    <span class="banner-dot"></span>
+    <span class="banner-item">🔄 Mis à jour chaque lundi automatiquement</span>
+    <span class="banner-dot"></span>
+  </div>
+</div>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="navbar-inner">
+    <div class="navbar-logo" onclick="afficherPage('page-home', false)">Pharma<em>Garde</em></div>
+    <div class="navbar-links">
+      <button class="navbar-link active" id="nav-home" onclick="afficherPage('page-home', false)">💊 Pharmacies</button>
+      <button class="navbar-link" id="nav-toutes" onclick="afficherPage('page-toutes', true)">📋 Toutes</button>
+      <button class="navbar-link" id="nav-urgences" onclick="afficherPage('page-urgences', true)">🚨 Urgences</button>
+      <button class="navbar-link" id="nav-contact" onclick="afficherPage('page-contact', true)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Contact
+      </button>
+    </div>
+    <div class="navbar-right">
+      <div class="live-badge"><div class="live-dot"></div><span>En ligne</span></div>
+      <button class="navbar-ville" onclick="afficherPage('page-villes', true)">
+        📍 <span id="loc-main">Lomé</span>
+      </button>
+      <button class="dark-toggle-btn" onclick="toggleDark()" id="dark-icon">🌙</button>
+      <button class="hamburger" id="hamburger" onclick="ouvrirMenu()">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </div>
-</template>
+</nav>
 
 <!-- ══════════════════════════════
      PAGE ACCUEIL
 ══════════════════════════════ -->
 <div class="page active" id="page-home">
 
-  <div class="banniere-slot"></div>
-
-  <div class="app-header">
-    <div class="header-top">
-      <div class="header-logo" onclick="afficherPage('page-home', false)">Pharma<em>Garde</em></div>
-      <div class="header-right">
-        <div class="live-badge"><div class="live-dot"></div><span>En ligne</span></div>
-        <button class="hamburger" id="hamburger" onclick="ouvrirMenu()">
-          <span></span><span></span><span></span>
-        </button>
+  <!-- Hero -->
+  <div class="hero-section">
+    <div class="hero-inner">
+      <div class="hero-left">
+        <h1 class="hero-title">Votre <em>guide santé</em><br>au Togo</h1>
+        <p class="hero-subtitle">Trouvez rapidement une pharmacie de garde près de chez vous, partout au Togo. Itinéraire intégré, numéros directs, mis à jour chaque lundi.</p>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <span class="hero-stat-num" id="stat-pharmacies">—</span>
+            <span class="hero-stat-label">Pharmacies</span>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div class="hero-stat">
+            <span class="hero-stat-num" id="stat-villes">—</span>
+            <span class="hero-stat-label">Villes</span>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div class="hero-stat">
+            <span class="hero-stat-num">24h</span>
+            <span class="hero-stat-label">Disponible</span>
+          </div>
+        </div>
+        <div class="update-badge" id="update-badge">🔄 Chargement...</div>
       </div>
-    </div>
-    <div class="location-pill" onclick="afficherPage('page-villes', true)">
-      <span>📍</span>
-      <div style="flex:1;">
-        <div class="loc-main" id="loc-main">Détection GPS...</div>
-        <div class="loc-sub" id="loc-sub">Appuyez pour changer de ville</div>
+      <div class="hero-location" onclick="afficherPage('page-villes', true)">
+        <div style="font-size:11px;color:rgba(255,255,255,0.6);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">📍 Ville sélectionnée</div>
+        <div class="loc-main" id="loc-main-hero">Lomé</div>
+        <div class="loc-sub" id="loc-sub">Cliquez pour changer</div>
+        <div style="margin-top:10px;font-size:12px;color:rgba(255,255,255,0.5);">→ Changer de ville</div>
       </div>
-      <span style="color:rgba(255,255,255,0.5);">›</span>
     </div>
   </div>
 
-  <div class="hero-description">
-    <div class="hero-stats">
-      <div class="hero-stat">
-        <span class="hero-stat-num" id="stat-pharmacies">—</span>
-        <span class="hero-stat-label">Pharmacies</span>
-      </div>
-      <div class="hero-stat-divider"></div>
-      <div class="hero-stat">
-        <span class="hero-stat-num" id="stat-villes">—</span>
-        <span class="hero-stat-label">Villes</span>
-      </div>
-      <div class="hero-stat-divider"></div>
-      <div class="hero-stat">
-        <span class="hero-stat-num">24h</span>
-        <span class="hero-stat-label">Disponible</span>
-      </div>
+  <!-- Recherche -->
+  <div class="search-section">
+    <div class="search-inner">
+      <input class="search-bar" id="search-input" placeholder="🔍 Rechercher une pharmacie, un quartier..." oninput="rechercherPharmacie(this.value)" autocomplete="off">
     </div>
-    <p class="hero-text">Trouvez rapidement une pharmacie de garde près de chez vous, partout au Togo. Itinéraire intégré, numéros directs.</p>
-    <div class="update-badge" id="update-badge">🔄 Chargement...</div>
   </div>
 
-  <div class="search-bar-wrap">
-    <input class="search-bar" id="search-input" placeholder="Rechercher une pharmacie, un quartier..." oninput="rechercherPharmacie(this.value)" autocomplete="off">
-  </div>
-
-  <div class="scroll-area">
-    <div id="plus-proche-section" style="display:none;">
+  <!-- Contenu principal -->
+  <div class="main-content">
+    <div id="plus-proche-section" style="display:none;margin-bottom:24px;">
       <div class="section-label">📍 La plus proche de vous</div>
       <div id="plus-proche-card"></div>
     </div>
 
-    <div class="section-label" style="margin-top:4px;">
+    <div class="section-label">
       Pharmacies de garde
       <span class="count-badge" id="count-badge">...</span>
     </div>
@@ -207,174 +218,161 @@
     <div class="urg-grid" id="urgences-home"></div>
   </div>
 
+  <!-- Footer -->
   <footer class="app-footer">
-    <div class="footer-top">
-      <div class="footer-brand">
-        <div class="footer-logo">Pharma<em>Garde</em></div>
-        <p class="footer-desc">Votre guide santé au Togo. Pharmacies de garde, numéros d'urgence et itinéraires en temps réel.</p>
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="footer-logo">Pharma<em>Garde</em></div>
+          <p class="footer-desc">Votre guide santé au Togo. Pharmacies de garde, numéros d'urgence et itinéraires en temps réel. Données mises à jour chaque lundi depuis les sources officielles.</p>
+        </div>
+        <div>
+          <div class="footer-link-title">Navigation</div>
+          <button class="footer-link" onclick="afficherPage('page-home', false)">🏠 Accueil</button>
+          <button class="footer-link" onclick="afficherPage('page-toutes', true)">📋 Toutes les pharmacies</button>
+          <button class="footer-link" onclick="afficherPage('page-urgences', true)">🚨 Urgences</button>
+          <button class="footer-link" onclick="afficherPage('page-villes', true)">🏙️ Changer de ville</button>
+          <button class="footer-link" onclick="afficherPage('page-contact', true)">✉️ Contact</button>
+        </div>
+        <div>
+          <div class="footer-link-title">Légal</div>
+          <button class="footer-link" onclick="ouvrirPolitique('confidentialite')">🔒 Confidentialité</button>
+          <button class="footer-link" onclick="ouvrirPolitique('conditions')">📄 Conditions d'utilisation</button>
+          <button class="footer-link" onclick="ouvrirPolitique('cookies')">🍪 Politique cookies</button>
+        </div>
       </div>
-      <div class="footer-links">
-        <div class="footer-link-title">Navigation</div>
-        <button class="footer-link" onclick="afficherPage('page-home', false)">🏠 Accueil</button>
-        <button class="footer-link" onclick="afficherPage('page-urgences', true)">🚨 Urgences</button>
-        <button class="footer-link" onclick="afficherPage('page-villes', true)">🏙️ Villes</button>
-        <button class="footer-link" onclick="afficherPage('page-contact', true)">✉️ Contact</button>
+      <div class="footer-bottom">
+        <div class="footer-copyright">© 2026 PharmaGarde Togo — Tous droits réservés</div>
+        <div class="footer-flag">Fait avec ❤️ au <span>🇹🇬</span> Togo</div>
       </div>
-      <div class="footer-links">
-        <div class="footer-link-title">Légal</div>
-        <button class="footer-link" onclick="ouvrirPolitique('confidentialite')">🔒 Confidentialité</button>
-        <button class="footer-link" onclick="ouvrirPolitique('conditions')">📄 Conditions</button>
-        <button class="footer-link" onclick="ouvrirPolitique('cookies')">🍪 Cookies</button>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <div class="footer-copyright">© 2026 PharmaGarde Togo — Tous droits réservés</div>
-      <div class="footer-flag">Fait avec ❤️ au 🇹🇬 Togo</div>
     </div>
   </footer>
-
-  <div class="bottom-nav">
-    <button class="nav-btn on" id="nav-home" onclick="afficherPage('page-home', false)">
-      <span class="nav-icon">💊</span>
-      <span class="nav-label">Pharmacies</span>
-      <div class="nav-pip"></div>
-    </button>
-    <button class="nav-btn" id="nav-urgences" onclick="afficherPage('page-urgences', true)">
-      <span class="nav-icon">🚨</span>
-      <span class="nav-label">Urgences</span>
-      <div class="nav-pip"></div>
-    </button>
-    <button class="nav-btn" id="nav-contact" onclick="afficherPage('page-contact', true)">
-      <span class="nav-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-      </span>
-      <span class="nav-label">Contact</span>
-      <div class="nav-pip"></div>
-    </button>
-  </div>
 </div>
 
 <!-- ══════════════════════════════
      PAGE TOUTES
 ══════════════════════════════ -->
 <div class="page" id="page-toutes">
-  <div class="banniere-slot"></div>
-  <div class="app-header">
-    <div class="header-top">
-      <button onclick="afficherPage('page-home', false)" style="background:none;border:none;color:white;font-size:28px;cursor:pointer;line-height:1;padding:0;">‹</button>
-      <div class="header-logo">Toutes les pharmacies</div>
-      <button class="hamburger" onclick="ouvrirMenu()"><span></span><span></span><span></span></button>
+  <div class="page-header">
+    <div class="page-header-inner">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+        <button onclick="afficherPage('page-home', false)" style="background:rgba(255,255,255,0.15);border:none;color:white;width:36px;height:36px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">‹</button>
+        <div class="page-header-title">Toutes les pharmacies</div>
+      </div>
+      <div class="page-header-sub">Liste complète par ville et par zone</div>
     </div>
   </div>
-  <div style="padding:12px 20px;background:var(--white);border-bottom:1px solid var(--border);">
-    <select id="select-ville" onchange="changerVilleToutes(this.value)" style="width:100%;padding:10px 14px;border-radius:var(--radius);border:1.5px solid var(--border);font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;color:var(--text);background:var(--bg);outline:none;"></select>
+
+  <div class="filter-bar">
+    <div class="filter-bar-inner">
+      <select id="select-ville" onchange="changerVilleToutes(this.value)" style="padding:9px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--border);font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;color:var(--text);background:var(--bg);outline:none;cursor:pointer;"></select>
+    </div>
   </div>
-  <div id="carte-container" style="height:200px;">
-    <div id="carte-lome" style="height:200px;width:100%;"></div>
+
+  <div class="carte-wrap" id="carte-container">
+    <div id="carte-lome" style="height:260px;width:100%;"></div>
   </div>
-  <div class="scroll-area" style="padding-top:16px;">
+
+  <div class="main-content">
     <div class="section-label">
       Liste complète
       <span class="count-badge" id="count-toutes">...</span>
     </div>
     <div id="liste-toutes"></div>
   </div>
-  <div class="bottom-nav">
-    <button class="nav-btn on" onclick="afficherPage('page-home', false)"><span class="nav-icon">💊</span><span class="nav-label">Pharmacies</span><div class="nav-pip"></div></button>
-    <button class="nav-btn" onclick="afficherPage('page-urgences', true)"><span class="nav-icon">🚨</span><span class="nav-label">Urgences</span><div class="nav-pip"></div></button>
-    <button class="nav-btn" onclick="afficherPage('page-contact', true)">
-      <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></span>
-      <span class="nav-label">Contact</span><div class="nav-pip"></div>
-    </button>
-  </div>
+
+  <footer class="app-footer">
+    <div class="footer-inner">
+      <div class="footer-bottom">
+        <div class="footer-copyright">© 2026 PharmaGarde Togo — Tous droits réservés</div>
+        <div class="footer-flag">Fait avec ❤️ au 🇹🇬 Togo</div>
+      </div>
+    </div>
+  </footer>
 </div>
 
 <!-- ══════════════════════════════
      PAGE VILLES
 ══════════════════════════════ -->
 <div class="page" id="page-villes">
-  <div class="banniere-slot"></div>
-  <div class="ville-header">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
-      <button onclick="afficherPage('page-home', false)" style="background:none;border:none;font-size:28px;cursor:pointer;color:var(--text);line-height:1;padding:0;">‹</button>
-      <div class="ville-title">Choisir une ville</div>
+  <div class="page-header">
+    <div class="page-header-inner">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+        <button onclick="afficherPage('page-home', false)" style="background:rgba(255,255,255,0.15);border:none;color:white;width:36px;height:36px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">‹</button>
+        <div class="page-header-title">Choisir une ville</div>
+      </div>
+      <div class="page-header-sub">Sélectionnez votre ville pour voir les pharmacies de garde</div>
     </div>
-    <input class="search-box" placeholder="🔍 Rechercher..." oninput="filtrerVilles(this.value)">
   </div>
-  <div class="ville-list" id="liste-villes"></div>
+  <div class="main-content">
+    <input class="search-bar" style="margin-bottom:20px;max-width:480px;" placeholder="🔍 Rechercher une ville..." oninput="filtrerVilles(this.value)">
+    <div class="ville-list" id="liste-villes"></div>
+  </div>
 </div>
 
 <!-- ══════════════════════════════
      PAGE URGENCES
 ══════════════════════════════ -->
 <div class="page" id="page-urgences">
-  <div class="banniere-slot"></div>
-  <div class="app-header">
-    <div class="header-top">
-      <button onclick="afficherPage('page-home', false)" style="background:none;border:none;color:white;font-size:28px;cursor:pointer;line-height:1;padding:0;">‹</button>
-      <div class="header-logo">Pharma<em>Garde</em></div>
-      <button class="hamburger" onclick="ouvrirMenu()"><span></span><span></span><span></span></button>
+  <div class="page-header">
+    <div class="page-header-inner">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+        <button onclick="afficherPage('page-home', false)" style="background:rgba(255,255,255,0.15);border:none;color:white;width:36px;height:36px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">‹</button>
+        <div class="page-header-title">Numéros d'urgence</div>
+      </div>
+      <div class="page-header-sub">Togo · Disponibles 24h/24</div>
     </div>
   </div>
-  <div class="scroll-area">
+  <div class="main-content">
     <div class="section-label">Numéros d'urgence · Togo</div>
     <div id="urgences-page"></div>
   </div>
-  <div class="bottom-nav">
-    <button class="nav-btn" onclick="afficherPage('page-home', false)"><span class="nav-icon">💊</span><span class="nav-label">Pharmacies</span><div class="nav-pip"></div></button>
-    <button class="nav-btn on"><span class="nav-icon">🚨</span><span class="nav-label">Urgences</span><div class="nav-pip"></div></button>
-    <button class="nav-btn" onclick="afficherPage('page-contact', true)">
-      <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></span>
-      <span class="nav-label">Contact</span><div class="nav-pip"></div>
-    </button>
-  </div>
+  <footer class="app-footer">
+    <div class="footer-inner">
+      <div class="footer-bottom">
+        <div class="footer-copyright">© 2026 PharmaGarde Togo</div>
+        <div class="footer-flag">Fait avec ❤️ au 🇹🇬 Togo</div>
+      </div>
+    </div>
+  </footer>
 </div>
 
 <!-- ══════════════════════════════
      PAGE CONTACT
 ══════════════════════════════ -->
 <div class="page" id="page-contact">
-  <div class="banniere-slot"></div>
-  <div class="contact-hero">
-    <div class="header-top" style="margin-bottom:16px;">
-      <button onclick="afficherPage('page-home', false)" style="background:none;border:none;color:white;font-size:28px;cursor:pointer;line-height:1;padding:0;">‹</button>
-      <div class="header-logo">Pharma<em>Garde</em></div>
-      <button class="hamburger" onclick="ouvrirMenu()"><span></span><span></span><span></span></button>
+  <div class="page-header">
+    <div class="page-header-inner">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+        <button onclick="afficherPage('page-home', false)" style="background:rgba(255,255,255,0.15);border:none;color:white;width:36px;height:36px;border-radius:50%;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">‹</button>
+        <div class="page-header-title">Nous contacter</div>
+      </div>
+      <div class="page-header-sub">Pharmacie manquante ? Erreur ? Suggestion ?</div>
     </div>
-    <div class="contact-title">Nous écrire 💬</div>
-    <div class="contact-sub">Pharmacie manquante ? Erreur ? Suggestion ?</div>
   </div>
-  <div class="contact-body">
-    <label class="form-label">Votre numéro WhatsApp</label>
-    <input class="form-input" id="input-tel" type="tel" placeholder="+228 XX XX XX XX">
-    <label class="form-label">Votre ville</label>
-    <input class="form-input" id="input-ville" placeholder="Ex: Lomé, Kara, Sokodé...">
-    <label class="form-label">Votre message</label>
-    <textarea class="form-input" id="input-message" placeholder="Ex: La pharmacie X est de garde ce soir mais n'apparaît pas..."></textarea>
-    <button class="wa-btn" onclick="envoyerWhatsApp()">💬 Envoyer via WhatsApp</button>
-    <p style="text-align:center;color:var(--sub);font-size:12px;margin-top:12px;">Réponse sous 24h · Données confidentielles</p>
+  <div class="main-content">
+    <div class="contact-body">
+      <label class="form-label">Votre numéro WhatsApp</label>
+      <input class="form-input" id="input-tel" type="tel" placeholder="+228 XX XX XX XX">
+      <label class="form-label">Votre ville</label>
+      <input class="form-input" id="input-ville" placeholder="Ex: Lomé, Kara, Sokodé...">
+      <label class="form-label">Votre message</label>
+      <textarea class="form-input" id="input-message" placeholder="Ex: La pharmacie X est de garde ce soir mais n'apparaît pas..."></textarea>
+      <button class="wa-btn" onclick="envoyerWhatsApp()">💬 Envoyer via WhatsApp</button>
+      <p style="color:var(--sub);font-size:12px;margin-top:12px;">Réponse sous 24h · Données confidentielles</p>
+    </div>
   </div>
-  <div class="bottom-nav">
-    <button class="nav-btn" onclick="afficherPage('page-home', false)"><span class="nav-icon">💊</span><span class="nav-label">Pharmacies</span><div class="nav-pip"></div></button>
-    <button class="nav-btn" onclick="afficherPage('page-urgences', true)"><span class="nav-icon">🚨</span><span class="nav-label">Urgences</span><div class="nav-pip"></div></button>
-    <button class="nav-btn on">
-      <span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></span>
-      <span class="nav-label">Contact</span><div class="nav-pip"></div>
-    </button>
-  </div>
+  <footer class="app-footer">
+    <div class="footer-inner">
+      <div class="footer-bottom">
+        <div class="footer-copyright">© 2026 PharmaGarde Togo</div>
+        <div class="footer-flag">Fait avec ❤️ au 🇹🇬 Togo</div>
+      </div>
+    </div>
+  </footer>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="app.js"></script>
-
-<script>
-// Injecter la bannière sur toutes les pages au chargement
-document.addEventListener('DOMContentLoaded', () => {
-  const template = document.getElementById('banniere-template');
-  document.querySelectorAll('.banniere-slot').forEach(slot => {
-    slot.replaceWith(template.content.cloneNode(true));
-  });
-});
-</script>
 </body>
 </html>
